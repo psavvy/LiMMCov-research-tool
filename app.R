@@ -7,9 +7,11 @@
 
 options(shiny.maxRequestSize = 10000 * 1024^2)
 
-#################
-# Load libraries
-#################
+#############################
+# Load libraries and sources
+#############################
+source("utils.R")
+source("global.R")
 library(shiny)
 library(lme4)
 library(nlme)
@@ -39,6 +41,7 @@ library(sjmisc)
 library(sjlabelled)
 library(kableExtra)
 library(shinyFeedback)
+library(shinycssloaders)
 library(shinyAce)
 library(bslib)
 library(tinytex)
@@ -69,7 +72,9 @@ ui <- fluidPage(
   navbarPage(
     id = "navbar",
     # Application title
-    tags$p(strong("LiMMCov"), style = "color:#003399"),
+    title = "LiMMCov",
+    #tags$p(strong("LiMMCov"), style = "color:#003399"),
+    theme = shinytheme("flatly"),
 
     # Main tabs for the web application
     ###################################
@@ -108,22 +113,8 @@ ui <- fluidPage(
           
        
         )
-      ),
-      # Footer
-      #tags$hr(),
-      absolutePanel(
-        bottom = 10,
-        left = 0,
-        right = 0,
-        height = "auto",
-        fixed = TRUE,
-        tags$div(
-          style = "text-align: left; width: 100%; padding: 10px;",
-          tags$h6(
-            em("Copyright 2024, Support for Quantitative and Qualitative Research, Version 01.06.24")
-          )
-        )
-      ) 
+      )
+ 
     ),
     
     ###################################
@@ -141,6 +132,8 @@ ui <- fluidPage(
             sidebarPanel(
               width = 3,
               # Example Data
+              tags$p(strong("In this tab, you can upload your dataset or use example datasets provided in the app. You can also view and manage your data before proceeding to analysis in the GLM tab.", style = "color:#003399")),
+              tags$hr(),
               selectizeInput(
                 inputId = "exdata", label = strong("Choose example data", style = "color:#003399"), selected = "",
                 choices = c("", "AR(1) Example", "AR(2) Example", "Comp.Symmetry Example", "COVID data"),
@@ -149,6 +142,15 @@ ui <- fluidPage(
               tags$hr(),
               # Upload own data
               tags$h5(em("OR load your own data file", style = "color:#FF6600")),
+              tags$br(),
+              # Missing Data Warning
+              tags$p(
+                strong("Important:", style = "color:#CC0000"), " This application does not support missing data.",
+                "Please ensure that your dataset is complete before uploading. If your data contains missing values, consider handling them through multiple imputation before importing.",
+                "Some R packages that can be used for multiple imputation include ",
+                tags$code("mice"), ", ", tags$code("Amelia"), ", and ", tags$code("missForest"), "."
+              ),
+              tags$br(),
               radioButtons("ext",
                            label = strong("Select file extension", style = "color:#003399"),
                            choices = list(
@@ -177,7 +179,12 @@ ui <- fluidPage(
               uiOutput("data_management"),
               uiOutput("manage_data_options"),
               uiOutput("var_name_extension"),
-              uiOutput("changes_button")
+              uiOutput("changes_button"),
+              tags$hr(),
+              tags$p(
+                "Use the ", strong("View Data"), " tab to preview your dataset and verify the data has been loaded correctly. 
+  Navigate to the ", strong("Data Summary"), " tab for descriptive statistics and variable distributions."
+              )
             ),
             mainPanel(
               width = 9,
@@ -214,6 +221,11 @@ ui <- fluidPage(
             sidebarPanel(
               width = 3,
               # style = "position: fixed; ",
+              #    # Help Text for Users
+              tags$p(
+                strong("Instructions:", style = "color:#CC0000"), " Use this tab to fit a General Linear Model (GLM) by selecting an outcome variable, fixed effects, and interaction terms if needed. Click 'Run GLM' to estimate the model and view the summary output."
+              ),
+              tags$hr(),
               # Fixed effects model sidebar content
               selectizeInput(
                 inputId = "subject_id_glm", label = strong("Select subject or ID variable", style = "color:#003399"),
@@ -249,14 +261,8 @@ ui <- fluidPage(
             ),
             mainPanel(
               width = 9,
-              # Fixed effects model main content
-              # tags$h4("What is a General Linear Model?", style = "color:#003399"),
-              # tags$p("This is a statistical framework that models the relationship between a continuous dependent variable and one or more independent variables using a linear combination of the predictors. In this tab, you can fit a linear model by selecting the outcome and fixed effects."),
-              # br(),
-              # tags$h4("Application in covariance analysis", style = "color:#003399"),
-              # tags$p("The rationale behind fitting a GLM in this context is to allow the model residuals to capture the underlying covariance structure present in the longitudinal data. By selecting the outcome variable and the mean structure (fixed effects), you can examine how these variables relate to each other."),
               tags$h4("What is a General Linear Model?", style = "color:#003399"),
-              tags$p("A General Linear Model (GLM) explains the relationship between a continuous dependent variable and one or more independent variables through a linear equation. Use this tab to fit a linear model by selecting an outcome variable and fixed effects."),
+              tags$p("A General Linear Model (GLM) explains the relationship between a continuous dependent variable and one or more independent variables through a linear equation. GLMs assume a linear relationship between the dependent variable and predictors. If interactions are relevant, you can include them to assess whether the effect of one predictor depends on another."),
               br(),
               tags$h4("Why use GLMs for covariance analysis?", style = "color:#003399"),
               tags$p("Fitting a GLM helps model residuals to uncover the covariance structure in longitudinal data. By specifying the outcome variable and mean structure (fixed effects), you can explore relationships among variables."),
@@ -364,6 +370,10 @@ ui <- fluidPage(
             sidebarPanel(
               width = 3,
               # Linear mixed model sidebar content
+              tags$p(
+                strong("Instructions:", style = "color:#CC0000"), " Use this tab to fit a Linear Mixed Model (LMM) by selecting an outcome variable, fixed effects, the chosen residual covariance structure (from previous tab) and interaction terms if needed. Click 'Run LMM' to estimate the model and view the summary outputs."
+              ),
+              tags$hr(),
               # variableSelectorUI("lmm_selector"),
               selectizeInput(
                 inputId = "subject_id_lmm", label = strong("Select subject or ID variable", style = "color:#003399"),
@@ -407,8 +417,14 @@ ui <- fluidPage(
                 )
               ),
               tags$hr(),
+              checkboxInput(
+                inputId = "heteroscedastic_check",
+                label = "Include heteroscedastic variances (varIdent)",
+                value = FALSE
+              ),
+              # A warning message placeholder
+              uiOutput("hetero_warning"),
               actionButton("run_lmm_model", "Run LMM"),
-              # Add more options as needed
             ),
             
             ########################################################################
@@ -448,6 +464,10 @@ describe the correlations between the repeated measurements."),
           sidebarLayout(
             sidebarPanel(
               width = 3,
+              tags$p(
+                strong("Generate a report summarizing your analyses. Choose a format (HTML, PDF, or Word) and click the button to download.", style = "color:#003399")
+              ),
+              tags$hr(),
               # Report generation sidebar content
               selectInput("report_format", label = strong("Select Report Format", style = "color:#003399"), choices = c("HTML (Recommended)" = "HTML", "PDF" = "PDF", "Word" = "Word")),
               downloadButton("download_report", "Download Report")
@@ -507,13 +527,29 @@ describe the correlations between the repeated measurements."),
         tags$p("Use the ", strong("Covariance Analysis"), " tab to explore the underlying covariance structure of the residuals. It provides insights into the correlation structure of residuals from the GLM. Residual plots help identify specific patterns related to different correlation structures, while PACF plots provide further insight."),
         br(),
         tags$p(em("Interpreting Residual Plots and PACF:")),
+        # tags$ul(
+        #   tags$li(tags$b("Compound Symmetry (CS): "), "Residuals show a flat line across all lags. In the PACF, a single spike at lag 1 indicates constant correlation."),
+        #   tags$li(tags$b("Autoregressive Order 1 (AR1): "), "Residuals decline linearly as correlation decays exponentially with increasing lag. The PACF shows a significant spike at lag 1, with subsequent lags close to zero."),
+        #   tags$li(tags$b("Autoregressive Order 2 (AR2): "), "Residuals oscillate around zero, capturing interactions between lag terms. The PACF typically shows significant spikes at lags 1 and 2."),
+        #   tags$li(tags$b("AR(p): "), "PACF will have significant spikes up to lag p, reflecting the autoregressive model's true order.")
+        # ),
+        # br(),
+        tags$p("Use this quick reference guide to determine the appropriate covariance structure based on your residual plots and PACF patterns:"),
         tags$ul(
-          tags$li(tags$b("Compound Symmetry (CS): "), "Residuals show a flat line across all lags. In the PACF, a single spike at lag 1 indicates constant correlation."),
-          tags$li(tags$b("Autoregressive Order 1 (AR1): "), "Residuals decline linearly as correlation decays exponentially with increasing lag. The PACF shows a significant spike at lag 1, with subsequent lags close to zero."),
-          tags$li(tags$b("Autoregressive Order 2 (AR2): "), "Residuals oscillate around zero, capturing interactions between lag terms. The PACF typically shows significant spikes at lags 1 and 2."),
-          tags$li(tags$b("AR(p): "), "PACF will have significant spikes up to lag p, reflecting the autoregressive model's true order.")
+          tags$li(tags$b("Step 1: "), "Examine the residual plot. If there is no correlation (flat line across all lags), use Compound Symmetry (CS)."),
+          tags$li(tags$b("Step 2: "), "If residuals oscillate, use AR(2)."),
+          tags$li(tags$b("Step 3: "), "If there is a gradual decay in correlation, check the PACF."),
+          tags$ul(
+            tags$li(tags$b("PACF: Single spike at lag 1 → "), "Use AR(1)."),
+            tags$li(tags$b("PACF: Spikes at lags 1 and 2 → "), "Use AR(2)."),
+            tags$li(tags$b("PACF: Multiple spikes up to lag p → "), "Use AR(p).")
+          )
         ),
-        br(),
+        tags$br(),
+        tags$p("Refer to the decision tree below for a visual representation:"),
+        img(src = "decision_tree.png", height = "400px", width = "600px", align = "center"), 
+        tags$br(),
+        tags$br(),
         tags$p("The following covariance structures are available in the nlme package, each with different applications:"),
         tags$ol(
           tags$li(tags$b("corAR1 (Autoregressive order 1):")),
@@ -627,6 +663,21 @@ describe the correlations between the repeated measurements."),
             # Kurt Barb\xe9
           )
         )
+      ),
+      # Footer
+      #tags$hr(),
+      absolutePanel(
+        bottom = 10,
+        left = 0,
+        right = 0,
+        height = "auto",
+        fixed = TRUE,
+        tags$div(
+          style = "text-align: left; width: 100%; padding: 10px;",
+          tags$h6(
+            em("Copyright 2025. Support for Quantitative and Qualitative Research. Version 06.03.25")
+          )
+        )
       )
     ),
     navbarMenu(
@@ -639,53 +690,6 @@ describe the correlations between the repeated measurements."),
     tags$style(type = "text/css", "body{padding-top: 90px;}")
   )
 )
-
-#####################################
-# Load datasets and expressions used in the server
-#####################################
-load("simdata_ar1.RData")
-load("simdata_ar2.RData")
-load("simdata_cs.RData")
-load("covid.RData")
-
-# Function for ACF and PACF
-plot_acf_pacf <- function(model, conf_level = 0.95) {
-  # Calculate residuals and ACF/PACF
-  residuals <- resid(model)
-  acf_result <- acf(residuals, plot = FALSE)
-  pacf_result <- pacf(residuals, plot = FALSE)
-
-  # Calculate critical lines
-  ciline <- qnorm((1 - conf_level) / 2) / sqrt(length(residuals))
-
-  # Create ACF plot
-  acf_df <- data.frame(lag = acf_result$lag, acf = acf_result$acf)
-  acf_plot <- ggplot(data = acf_df, aes(x = lag, y = acf)) +
-    geom_hline(aes(yintercept = 0)) +
-    geom_segment(mapping = aes(xend = lag, yend = 0)) +
-    geom_hline(aes(yintercept = ciline), linetype = 2, color = "blue") +
-    geom_hline(aes(yintercept = -ciline), linetype = 2, color = "blue") +
-    labs(
-      title = "Autocorrelation Function (ACF)",
-      x = "Lag", y = "ACF"
-    ) +
-    theme_bw()
-
-  # Create PACF plot
-  pacf_df <- data.frame(lag = pacf_result$lag, acf = pacf_result$acf)
-  pacf_plot <- ggplot(data = pacf_df, aes(x = lag, y = acf)) +
-    geom_hline(aes(yintercept = 0)) +
-    geom_segment(mapping = aes(xend = lag, yend = 0)) +
-    geom_hline(aes(yintercept = ciline), linetype = 2, color = "blue") +
-    geom_hline(aes(yintercept = -ciline), linetype = 2, color = "blue") +
-    labs(
-      title = "Partial Autocorrelation Function (PACF)",
-      x = "Lag", y = "PACF"
-    ) +
-    theme_bw()
-
-  return(list(acf_plot = ggplotly(acf_plot, width = 425, height = 425), pacf_plot = ggplotly(pacf_plot, width = 425, height = 425)))
-}
 
 #####################################
 # Define server logic
@@ -919,34 +923,63 @@ server <- function(input, output, session) {
     })
   })
   
-  # Run the generaliesd linear model
+  # Run the generalised linear model
+  # glm_model <- reactive({
+  #   req(input$run_glm_model)
+  #   predictors <- paste(input$predictor_glm, collapse = "+")
+  #   
+  #   # Construct the formula with interactions if any
+  #   if (!is.null(input$added_glm)) {
+  #     interaction_terms <- paste(input$added_glm, collapse = " + ")
+  #     formula_str <- paste(input$outcome_glm, "~", input$timevar_glm)
+  #     
+  #     if (!is.null(input$predictor_glm)) {
+  #       formula_str <- paste(formula_str, "+", predictors)
+  #     }
+  #     
+  #     formula_str <- paste(formula_str, "+", interaction_terms)
+  #     
+  #     gls(as.formula(formula_str), data = dataset())
+  #   } else {
+  #     # Original logic without interactions
+  #     if (!is.null(input$predictor_glm)) {
+  #       gls(as.formula(paste(input$outcome_glm, "~", input$timevar_glm, "+", predictors)), data = dataset())
+  #     } else {
+  #       gls(as.formula(paste(input$outcome_glm, "~", input$timevar_glm)), data = dataset())
+  #     }
+  #   }
+  # })
+  
   glm_model <- reactive({
     req(input$run_glm_model)
-    predictors <- paste(input$predictor_glm, collapse = "+")
     
-    # Construct the formula with interactions if any
+    # Build up the formula string
+    predictors <- paste(input$predictor_glm, collapse = "+")
+    formula_str <- paste(input$outcome_glm, "~", input$timevar_glm)
+    
+    # If there are main-effect predictors
+    if (!is.null(input$predictor_glm)) {
+      formula_str <- paste(formula_str, "+", predictors)
+    }
+    
+    # If there are interaction terms
     if (!is.null(input$added_glm)) {
       interaction_terms <- paste(input$added_glm, collapse = " + ")
-      formula_str <- paste(input$outcome_glm, "~", input$timevar_glm)
-      
-      if (!is.null(input$predictor_glm)) {
-        formula_str <- paste(formula_str, "+", predictors)
-      }
-      
       formula_str <- paste(formula_str, "+", interaction_terms)
-      
-      gls(as.formula(formula_str), data = dataset())
-    } else {
-      # Original logic without interactions
-      if (!is.null(input$predictor_glm)) {
-        gls(as.formula(paste(input$outcome_glm, "~", input$timevar_glm, "+", predictors)), data = dataset())
-      } else {
-        gls(as.formula(paste(input$outcome_glm, "~", input$timevar_glm)), data = dataset())
-      }
     }
+    
+    # Convert to a proper formula object
+    form_obj <- as.formula(formula_str)
+    
+    # Fit the model with the explicit formula in the call
+    mod <- gls(model = form_obj, data = dataset())
+    
+    # Update the call attribute to show the proper formula
+    mod$call$model <- form_obj
+    
+    return(mod)
   })
   
- 
   # Generate a summary of the regression model
   output$glm_summaryUI <- renderUI({
     req(glm_model())
@@ -1035,102 +1068,290 @@ server <- function(input, output, session) {
 
   # LMM Models
   # Reactive formula for GLS model
-    gls_formula <- reactive({
-      req(input$outcome_lmm, input$timevar_lmm)
-      predictors <- paste(input$predictor_lmm, collapse = "+")
-      if (!is.null(input$added)) {
-        as.formula(paste(input$outcome_lmm, " ~ ", input$timevar_lmm, " + ", predictors, paste(" + ", input$added, collapse = " + ")))
-      } else if (!is.null(input$predictor_lmm)) {
-        as.formula(paste(input$outcome_lmm, " ~ ", input$timevar_lmm, " + ", predictors))
-      } else {
-        as.formula(paste(input$outcome_lmm, " ~ ", input$timevar_lmm))
-      }
-    })
+  gls_formula <- reactive({
+    req(input$outcome_lmm, input$timevar_lmm)
     
-    # Function to generate the correlation structure string
-    cor_structure <- function(structure) {
-      req(input$subject_id_lmm)
-      if (structure == "AR(p)") {
-        req(input$ar_order)
-        order <- as.numeric(input$ar_order)
-        return(paste0("corARMA(form = ~ 1 | ", input$subject_id_lmm, ", p = ", order, ")"))
+    # Collect all terms: timevar, predictors, and interactions
+    all_terms <- c(input$timevar_lmm, input$predictor_lmm, input$added)
+    
+    # Remove any empty strings (if present)
+    all_terms <- all_terms[nzchar(all_terms)]
+    
+    # Construct the formula string
+    formula_str <- paste(
+      input$outcome_lmm, 
+      "~", 
+      paste(all_terms, collapse = "+")
+    )
+    
+    as.formula(formula_str)
+  })
+  
+  # Function to generate the correlation structure string
+  cor_structure <- function(structure) {
+    req(input$subject_id_lmm)
+    if (structure == "AR(p)") {
+      req(input$ar_order)
+      order <- as.numeric(input$ar_order)
+      return(paste0("corARMA(form = ~ 1 | ", input$subject_id_lmm, ", p = ", order, ")"))
+    }
+    switch(structure,
+           "CompSymm" = paste0("corCompSymm(form = ~ 1 | ", input$subject_id_lmm, ")"),
+           "Exp" = paste0("corExp(form = ~ 1 | ", input$subject_id_lmm, ")"),
+           "Gaus" = paste0("corGaus(form = ~ 1 | ", input$subject_id_lmm, ")"),
+           "Lin" = paste0("corLin(form = ~ 1 | ", input$subject_id_lmm, ")"),
+           "Ratio" = paste0("corRatio(form = ~ 1 | ", input$subject_id_lmm, ")"),
+           "Spher" = paste0("corSpher(form = ~ 1 | ", input$subject_id_lmm, ")"),
+           "Symm" = paste0("corSymm(form = ~ 1 | ", input$subject_id_lmm, ")")
+    )
+  }
+  
+  # # Helper function to fit models
+  # fit_model <- function(form, correlation) {
+  #   # 'form' is expected to be a formula object
+  #   # Convert it to a single-line character string
+  #   form_str <- paste(deparse(form, width.cutoff = 500), collapse = " ")
+  #   
+  #   # Build the function call as a single string
+  #   final_call <- paste0(
+  #     "gls(",
+  #     form_str, 
+  #     ", data = dataset(), correlation = ", 
+  #     correlation, 
+  #     ")"
+  #   )
+  #   
+  #   # Print for debugging
+  #   #print(final_call)
+  #   
+  #   # Safely evaluate
+  #   tryCatch(
+  #     eval(parse(text = final_call)),
+  #     error = function(e) {
+  #       print(e)
+  #       NULL
+  #     }
+  #   )
+  # }
+  
+  # MODIFY: Update fit_model() to accept weights
+  fit_model <- function(form, correlation, weights = NULL) {
+    req(form, correlation)
+    
+    # Convert formula to a string
+    form_str <- paste(deparse(form, width.cutoff = 500), collapse = " ")
+    
+    # Build the gls() call
+    final_call <- paste0(
+      "gls(", form_str, 
+      ", data = dataset(), 
+       correlation = ", correlation
+    )
+    
+    # Add weights if specified
+    if (!is.null(weights)) {
+      final_call <- paste0(final_call, ", weights = ", weights)
+    }
+    final_call <- paste0(final_call, ")")
+    
+    # Evaluate safely
+    tryCatch(
+      eval(parse(text = final_call)),
+      error = function(e) {
+        print(e)
+        NULL
       }
-      switch(structure,
-             "CompSymm" = paste0("corCompSymm(form = ~ 1 | ", input$subject_id_lmm, ")"),
-             "Exp" = paste0("corExp(form = ~ 1 | ", input$subject_id_lmm, ")"),
-             "Gaus" = paste0("corGaus(form = ~ 1 | ", input$subject_id_lmm, ")"),
-             "Lin" = paste0("corLin(form = ~ 1 | ", input$subject_id_lmm, ")"),
-             "Ratio" = paste0("corRatio(form = ~ 1 | ", input$subject_id_lmm, ")"),
-             "Spher" = paste0("corSpher(form = ~ 1 | ", input$subject_id_lmm, ")"),
-             "Symm" = paste0("corSymm(form = ~ 1 | ", input$subject_id_lmm, ")")
+    )
+  }
+
+  # Reactive block for the initial model
+  initial_model <- reactive({
+    req(input$run_lmm_model, input$cov_structure)
+    # Instead of passing deparse(gls_formula()) directly,
+    # pass the formula object, letting fit_model handle deparsing
+    fit_model(
+      form = gls_formula(), 
+      correlation = cor_structure(input$cov_structure)
+    )
+  })
+  
+  # Reactive for the heteroscedastic model
+  heteroscedastic_model <- reactive({
+    req(input$heteroscedastic_check, input$cov_structure, input$subject_id_lmm)
+    
+    # Define weights structure (varIdent per subject)
+    weights_str <- paste0("varIdent(form = ~1 | ", input$subject_id_lmm, ")")
+    
+    # Fit model with selected correlation + heteroscedastic variance
+    fit_model(
+      form = gls_formula(),
+      correlation = cor_structure(input$cov_structure),
+      weights = weights_str  # Pass weights argument
+    )
+  })
+  
+  # Show warning when heteroscedastic model is selected
+  output$hetero_warning <- renderUI({
+    if (input$heteroscedastic_check) {
+      div(
+        class = "alert alert-warning",
+        HTML("&#9888; Including heteroscedastic variances (varIdent) may increase computation time.")
       )
     }
+  })
+  
+  # Reactive block for alternative models
+  fit_alternative_models <- reactive({
+    req(input$run_lmm_model) 
     
-    # Helper function to fit models
-    fit_model <- function(formula, correlation) {
-      tryCatch(
-        eval(parse(text = paste0("gls(", formula, ", data = dataset(), correlation = ", correlation, ")"))),
-        error = function(e) NULL
+    # The full set of correlation structures
+    all_structures <- c(
+      "AR(p)", "CompSymm", "Exp", "Gaus", 
+      "Lin", "Ratio", "Spher", "Symm"
+    )
+    remaining_structures <- setdiff(all_structures, input$cov_structure)
+    
+    # Fit each remaining structure
+    models <- lapply(remaining_structures, function(structure) {
+      fit_model(
+        form = gls_formula(), 
+        correlation = cor_structure(structure)
       )
-    }
-    
-    # Reactive for the initial model
-    initial_model <- reactive({
-      req(input$run_lmm_model, input$cov_structure)
-      fit_model(deparse(gls_formula()), cor_structure(input$cov_structure))
     })
     
-    # Reactive for alternative models
-    fit_alternative_models <- reactive({
-      req(input$run_lmm_model)
-      all_structures <- c("AR(p)", "CompSymm", "Exp", "Gaus", "Lin", "Ratio", "Spher", "Symm")
-      remaining_structures <- setdiff(all_structures, input$cov_structure)
-      
-      models <- lapply(remaining_structures, function(structure) {
-        fit_model(deparse(gls_formula()), cor_structure(structure))
-      })
-      names(models) <- remaining_structures
-      models
-    })
+    # Name the list of models after their structures
+    names(models) <- remaining_structures
     
+    models
+  })
+ 
     # Helper function to safely get AIC or BIC
     safe_stat <- function(model, stat = "AIC") {
       if (is.null(model)) "Model did not converge" else round(get(stat)(model), 2)
     }
     
     # Combine AICs and BICs into a table
-    comparison_table <- reactive({
+    # comparison_table <- reactive({
+    #   req(input$run_lmm_model)
+    #   
+    #   # Initial model's AIC and BIC
+    #   first_model_aic <- safe_stat(initial_model(), "AIC")
+    #   first_model_bic <- safe_stat(initial_model(), "BIC")
+    #   first_model_aicc <- safe_stat(initial_model(), "AICc")
+    #   
+    #   # AIC and BIC for alternative models
+    #   models <- fit_alternative_models()
+    #   alternative_aics <- sapply(models, safe_stat, stat = "AIC")
+    #   alternative_bics <- sapply(models, safe_stat, stat = "BIC")
+    #   alternative_aiccs <- sapply(models, safe_stat, stat = "AICc")
+    #   
+    #   selected_ar <- paste0("AR(", input$ar_order, ") (selected correlation structure)")
+    #   
+    #   # Create table
+    #   data.frame(
+        # "Correlation Structure" = c(
+        #   ifelse(input$cov_structure == "AR(p)", selected_ar, paste(input$cov_structure, "(selected correlation structure)")),
+        #   names(alternative_aics)
+        # ),
+    #     "AIC" = c(first_model_aic, alternative_aics),
+    #     "BIC" = c(first_model_bic, alternative_bics),
+    #     "AICc" = c(first_model_aicc, alternative_aiccs),
+    #     stringsAsFactors = FALSE
+    #   )
+    # })
+    
+      comparison_table <- reactive({
       req(input$run_lmm_model)
       
-      # Initial model's AIC and BIC
+      # Initial model (homoscedastic)
       first_model_aic <- safe_stat(initial_model(), "AIC")
       first_model_bic <- safe_stat(initial_model(), "BIC")
+      first_model_aicc <- safe_stat(initial_model(), "AICc")
       
-      # AIC and BIC for alternative models
+      # Heteroscedastic model (if selected)
+      if (input$heteroscedastic_check) {
+        hetero_model <- heteroscedastic_model()
+        hetero_aic <- safe_stat(hetero_model, "AIC")
+        hetero_bic <- safe_stat(hetero_model, "BIC")
+        hetero_aicc <- safe_stat(hetero_model, "AICc")
+      } else {
+        hetero_aic <- hetero_bic <- hetero_aicc <- NULL
+      }
+      
+      # Alternative models (other correlation structures)
       models <- fit_alternative_models()
       alternative_aics <- sapply(models, safe_stat, stat = "AIC")
       alternative_bics <- sapply(models, safe_stat, stat = "BIC")
+      alternative_aiccs <- sapply(models, safe_stat, stat = "AICc")
       
-      selected_ar <- paste0("AR(", input$ar_order, ") (selected correlation structure)")
-      
-      # Create table
-      data.frame(
-        "Correlation Structure" = c(
-          ifelse(input$cov_structure == "AR(p)", selected_ar, paste(input$cov_structure, "(selected correlation structure)")),
-          names(alternative_aics)
-        ),
-        "AIC" = c(first_model_aic, alternative_aics),
-        "BIC" = c(first_model_bic, alternative_bics),
-        stringsAsFactors = FALSE
+      # Build table rows
+      selected_label <- ifelse(
+        input$cov_structure == "AR(p)",
+        paste0("AR(", input$ar_order, ") (Selected structure)"),
+        paste(input$cov_structure, "(Selected structure)")
       )
+      
+      df_rows <- list(
+        c(selected_label, first_model_aic, first_model_bic, first_model_aicc)
+      )
+      
+      if (input$heteroscedastic_check) {
+        df_rows <- append(
+          df_rows,
+          list(c("Selected structure + Heteroscedastic variances", hetero_aic, hetero_bic, hetero_aicc))
+        )
+      }
+      
+      df_rows <- append(df_rows, lapply(seq_along(alternative_aics), function(i) {
+        c(names(alternative_aics)[i], alternative_aics[i], alternative_bics[i], alternative_aiccs[i])
+      }))
+      
+      # Create data.frame
+      data.frame(
+        do.call(rbind, df_rows),
+        stringsAsFactors = FALSE
+      ) %>% setNames(c("Correlation Structure", "AIC", "BIC", "AICc"))
+      
     })
+      
+      #selected_ar <- paste0("AR(", input$ar_order, ") (Selected)")
+      
+      # Create table with all models
+    #   data.frame(
+    #     "Correlation Structure" = c(
+    #       ifelse(input$cov_structure == "AR(p)", selected_ar, paste(input$cov_structure, "(Selected)")),
+    #       "Selected + Heteroscedastic variances",
+    #       names(alternative_aics)
+    #     ),
+    #     
+    #     "AIC" = c(first_model_aic, hetero_aic, alternative_aics),
+    #     "BIC" = c(first_model_bic, hetero_bic, alternative_bics),
+    #     "AICc" = c(first_model_aicc, hetero_aicc, alternative_aiccs),
+    #     stringsAsFactors = FALSE
+    #   )
+    # })
     
     # Render AIC and BIC table
     observeEvent(input$run_lmm_model, {
-      output$lmm_aic_table <- renderDT({
-        datatable(comparison_table(), options = list(pageLength = 10), rownames = FALSE)
-      })
+    output$lmm_aic_table <- renderDT({
+      req(input$run_lmm_model)
+      tryCatch(
+        datatable(comparison_table(), options = list(pageLength = 10), rownames = FALSE),
+        error = function(e) {
+          showNotification("Error generating table: Check model inputs", type = "error")
+          NULL
+        }
+      )
     })
+  })
+    
+    
+    # Render AIC and BIC table
+    # observeEvent(input$run_lmm_model, {
+    #   output$lmm_aic_table <- renderDT({
+    #     datatable(comparison_table(), options = list(pageLength = 10), rownames = FALSE)
+    #   })
+    # })
   
   # Print the correlation structure for debugging
   # observeEvent(input$run_lmm_model, {
@@ -1139,27 +1360,51 @@ server <- function(input, output, session) {
   # })
  
 #-------------------------------------------------------------------------------  
-  # Dynamic UI for the lmm summary
-  output$lmm_summaryUI <- renderUI({
-    req(initial_model())
-    tagList(
-      tags$h4("Model summary", style = "color:#003399"),
-      verbatimTextOutput("lmm_summary"),
-      br(),
-      fluidRow(
-        column(12,
-               tags$h4("Model fit comparison", style = "color:#003399"),
-               DTOutput("lmm_aic_table"),
-               br(),
-               br(),
-               br(),
-               br(),
-               br()
+  # Dynamic UI for the LMM summary
+    output$lmm_summaryUI <- renderUI({
+      req(initial_model(), input$run_lmm_model)
+      tagList(
+        tags$h4("Model Summary", style = "color:#003399"),
+        # Spinner and conditional message for model summary
+        withSpinner(
+          tagList(
+            verbatimTextOutput("lmm_summary"),
+            conditionalPanel(
+              condition = "!output.lmm_summary || output.lmm_summary === ''",
+              tags$p("The model is being fitted. This process may take a few moments, so please be patient.", 
+                     style = "color:#003399; font-style: italic;")
+            )
+          ),
+          type = 6, 
+          color = "#003399"
+        ),
+        br(),
+        fluidRow(
+          column(12,
+                 tags$h4("Model Fit Comparison", style = "color:#003399"),
+                 # Spinner and conditional message for AIC table
+                 withSpinner(
+                   tagList(
+                     DTOutput("lmm_aic_table"),
+                     conditionalPanel(
+                       condition = "!output.lmm_aic_table || output.lmm_aic_table === ''",
+                       tags$p("Calculating model fit metrics. Please wait while the table is generated.", 
+                              style = "color:#003399; font-style: italic;")
+                     )
+                   ),
+                   type = 6, 
+                   color = "#003399"
+                 ),
+                 br(),
+                 br(),
+                 br(),
+                 br(),
+                 br()
+          )
         )
       )
-    )
-  })
-  
+    })
+    
   # Display the summary of the initial model
   observeEvent(input$run_lmm_model, {
     output$lmm_summary <- renderPrint({
