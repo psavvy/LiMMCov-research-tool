@@ -67,13 +67,13 @@ ui <- fluidPage(
       </script>"
     )
   ),
-  
+
   # Open navbarPage for main headings
   navbarPage(
     id = "navbar",
     # Application title
     title = "LiMMCov",
-    #tags$p(strong("LiMMCov"), style = "color:#003399"),
+    # tags$p(strong("LiMMCov"), style = "color:#003399"),
     theme = shinytheme("flatly"),
 
     # Main tabs for the web application
@@ -92,9 +92,9 @@ ui <- fluidPage(
         mainPanel(
           # Welcome page main content
           width = 8,
-          tags$h4("Welcome to the Linear Mixed Model Research Tool", style = "color:#003399"),
-          tags$p("This tool guides you through the process of selecting residual covariance structures in linear mixed models. It uses time series insights for complex covariance structure. The LiMMCov tool offers visualisations to assess the residuals of fixed effects models and offer suggestions for the correct structure based on the data. The application is based on the Shiny package and can be run locally or on a server. The user-friendly interface enables the user to navigate the workflow. A report can be downloaded with the results."),
-          tags$p("This app was developed by the", tags$a(href = "https://square.research.vub.be/", "Support for Quantitative and Qualitative Research (SQUARE)"), "to provide the research community with complimentary support in statistics. The SQUARE core facility is part of the", tags$a(href = "https://bisi.research.vub.be/", "Biostatistics and Medical Informatics research group (BISI)"), "at the Vrije Universiteit Brussel (VUB)."),
+          tags$h4("Welcome to the Linear Mixed Model research tool", style = "color:#003399"),
+          tags$p("This tool guides you through the process of selecting residual covariance structures in linear mixed models. It uses time series insights for complex covariance structure. The LiMMCov tool offers visualisations to assess the residuals of fixed effects models and offer suggestions for the correct structure based on the data. The application is based on the Shiny package and the user-friendly interface enables the user to navigate the workflow. A report can be downloaded with the results."),
+          tags$p("This app was developed by the", tags$a(href = "https://square.research.vub.be/", "Support for Quantitative and Qualitative Research (SQUARE)"), "to provide the research community with complimentary support in statistics. The developers are part of the", tags$a(href = "https://bisi.research.vub.be/", "Biostatistics and Medical Informatics research group (BISI)"), "at the Vrije Universiteit Brussel (VUB)."),
           br(),
           tags$h4("Terms of use", style = "color:#003399"),
           tags$p("LiMMCov is not designed to be exhaustive and is thus appropriate for the use cases described in the app."),
@@ -102,392 +102,390 @@ ui <- fluidPage(
           br(),
           tags$h4("Feedback", style = "color:#003399"),
           tags$p("We would love to hear your thoughts, suggestions, concerns or problems you encountered while using LiMMCov so that we can improve. To do this, kindly evaluate the web-application via this", tags$a(href = "https://vub.fra1.qualtrics.com/jfe/form/SV_8hPgQVMvJ4FF1MW", "link."), "For other questions and comments please email ", tags$a(href = "mailto:perseverence.savieri@vub.be", "Perseverence.Savieri@vub.be")),
+          br(),
+          tags$h4("Contribute your dataset", style = "color:#003399"),
+          tags$p(
+            "Have a real-world dataset you'd like to share with the LiMMCov community? ",
+            "We welcome user-submitted datasets that are publicly available (e.g., openly licensed), ", "as they help us improve LiMMCov by covering a wider range of study designs and boundary cases. ", "If you are interested in contributing your dataset, please contact the development team via email so we can discuss adding it to our online repository."
+          ),
           br(), br(),
           tags$h4(strong("Click on the Dataset tab to get started."), style = "color:#FF6600"),
           br(), br(),
           # tags$h4("Note: This is not the final version of the app. It is still under development!", style = "color:#FF0000"),
           br(), br(),
-          
+
           # tags$h6(em("Copyright 2024, Support for Quantitative and Qualitative Research, Version 01.06.24"), align = "center"),
           # br(),
-          
-       
         )
       )
- 
     ),
-    
+
     ###################################
     # Analysis tab
     ###################################
-      navbarMenu(
-        title = tags$p(strong("Analysis"), style = "color:#FF6600; display: inline-block;"),
-        
-        ###################################
-        # Data Tab
-        ###################################
-        tabPanel(
-          tags$p("Dataset", style = "color:#FF6600"),
-          sidebarLayout(
-            sidebarPanel(
-              width = 3,
-              # Example Data
-              tags$p(strong("In this tab, you can upload your dataset or use example datasets provided in the app. You can also view and manage your data before proceeding to analysis in the GLM tab.", style = "color:#003399")),
-              tags$hr(),
-              selectizeInput(
-                inputId = "exdata", label = strong("Choose example data", style = "color:#003399"), selected = "",
-                choices = c("", "AR(1) Example", "AR(2) Example", "Comp.Symmetry Example", "COVID data"),
-                options = list(placeholder = "Choose example data")
+    navbarMenu(
+      title = tags$p(strong("Analysis"), style = "color:#FF6600; display: inline-block;"),
+
+      ###################################
+      # Data Tab
+      ###################################
+      tabPanel(
+        tags$p("Dataset", style = "color:#FF6600"),
+        sidebarLayout(
+          sidebarPanel(
+            width = 3,
+            # Example Data
+            tags$p(strong("In this tab, you can upload your dataset or use example datasets provided in the app. You can also view and manage your data before proceeding to analysis in the GLM tab.", style = "color:#003399")),
+            tags$hr(),
+            selectizeInput(
+              inputId = "exdata", label = strong("Choose example data", style = "color:#003399"), selected = "",
+              choices = c("", "AR(1) Example", "AR(2) Example", "Comp.Symmetry Example", "COVID data"),
+              options = list(placeholder = "Choose example data")
+            ),
+            tags$hr(),
+            # Upload own data
+            tags$h5(em("OR load your own data file", style = "color:#FF6600")),
+            tags$br(),
+            # Missing Data Warning
+            tags$p(
+              strong("Important:", style = "color:#CC0000"), " This application does not support missing data.",
+              "Please ensure that your dataset is complete before uploading. If your data contains missing values, consider handling them appropriately (for example through multiple imputation) before importing.",
+              "Some R packages that can be used for multiple imputation include ",
+              tags$code("mice"), ", ", tags$code("Amelia"), ", and ", tags$code("missForest"), "."
+            ),
+            tags$br(),
+            radioButtons("ext",
+              label = strong("Select file extension", style = "color:#003399"),
+              choices = list(
+                "Text file (.txt)" = "txt",
+                "CSV file (.csv)" = "csv",
+                "Excel file (.xlsx)" = "xlsx",
+                "SPSS file (.sav)" = "sav",
+                "Stata Dataset (.dta)" = "dta"
               ),
-              tags$hr(),
-              # Upload own data
-              tags$h5(em("OR load your own data file", style = "color:#FF6600")),
-              tags$br(),
-              # Missing Data Warning
-              tags$p(
-                strong("Important:", style = "color:#CC0000"), " This application does not support missing data.",
-                "Please ensure that your dataset is complete before uploading. If your data contains missing values, consider handling them through multiple imputation before importing.",
-                "Some R packages that can be used for multiple imputation include ",
-                tags$code("mice"), ", ", tags$code("Amelia"), ", and ", tags$code("missForest"), "."
-              ),
-              tags$br(),
-              radioButtons("ext",
-                           label = strong("Select file extension", style = "color:#003399"),
-                           choices = list(
-                             "Text file (.txt)" = "txt",
-                             "CSV file (.csv)" = "csv",
-                             "Excel file (.xlsx)" = "xlsx",
-                             "SPSS file (.sav)" = "sav",
-                             "Stata Dataset (.dta)" = "dta"
-                           ),
-                           selected = ""
-              ),
-              conditionalPanel(
-                condition = "input.ext == 'txt' | input.ext == 'csv' | input.ext == 'xlsx' | input.ext == 'sav' | input.ext == 'dta'",
-                tryCatch(
-                  fileInput("file1", strong("Select file"),
-                            accept = c(
-                              ".txt", ".csv", ".xlsx", ".sav", ".dta",
-                              ".CSV", ".TXT", ".XLSX", ".SAV", ".DTA"
-                            )
+              selected = ""
+            ),
+            conditionalPanel(
+              condition = "input.ext == 'txt' | input.ext == 'csv' | input.ext == 'xlsx' | input.ext == 'sav' | input.ext == 'dta'",
+              tryCatch(
+                fileInput("file1", strong("Select file"),
+                  accept = c(
+                    ".txt", ".csv", ".xlsx", ".sav", ".dta",
+                    ".CSV", ".TXT", ".XLSX", ".SAV", ".DTA"
                   )
                 )
-              ),
-              tags$hr(),
-              # Data management
-              uiOutput("edit_vars"),
-              uiOutput("data_management"),
-              uiOutput("manage_data_options"),
-              uiOutput("var_name_extension"),
-              uiOutput("changes_button"),
-              tags$hr(),
-              tags$p(
-                "Use the ", strong("View Data"), " tab to preview your dataset and verify the data has been loaded correctly. 
-  Navigate to the ", strong("Data Summary"), " tab for descriptive statistics and variable distributions."
               )
             ),
-            mainPanel(
-              width = 9,
-              # Data loading/uploading main content
-              tabsetPanel(
-                id = "datatabs",
-                # Data preview
-                tabPanel(
-                  tags$p("View Data", style = "color:#003399"),
-                  value = "datatab1",
-                  br(), br(),
-                  dataTableOutput("data_preview"),
-                  br(), br(),
-                ),
-                # Data summary
-                tabPanel(
-                  tags$p("Data Summary", style = "color:#003399"),
-                  value = "datatab2",
-                  # br(), br(),
-                  # h5(strong("Data summary")),
-                  htmlOutput("data_summ"),
-                  br(), br(),
-                )
-              )
-            )
-          )
-        ),
-        ###################################
-        # Fixed Effects Model Tab
-        ###################################
-        tabPanel(
-          tags$p("General Linear Model (GLM)", style = "color:#FF6600"),
-          sidebarLayout(
-            sidebarPanel(
-              width = 3,
-              # style = "position: fixed; ",
-              #    # Help Text for Users
-              tags$p(
-                strong("Instructions:", style = "color:#CC0000"), " Use this tab to fit a General Linear Model (GLM) by selecting an outcome variable, fixed effects, and interaction terms if needed. Click 'Run GLM' to estimate the model and view the summary output."
-              ),
-              tags$hr(),
-              # Fixed effects model sidebar content
-              selectizeInput(
-                inputId = "subject_id_glm", label = strong("Select subject or ID variable", style = "color:#003399"),
-                choices = NULL,
-                multiple = FALSE
-              ),
-              selectizeInput(
-                inputId = "outcome_glm", label = strong("Select outcome variable", style = "color:#003399"),
-                choices = NULL,
-                multiple = FALSE
-              ),
-              selectizeInput(
-                inputId = "timevar_glm", label = strong("Select time variable", style = "color:#003399"),
-                choices = NULL,
-                multiple = FALSE
-              ),
-              selectizeInput(
-                inputId = "predictor_glm", label = strong("Select fixed effects", style = "color:#003399"),
-                choices = NULL,
-                multiple = TRUE
-             ),
-             tags$hr(),
-             selectizeInput(
-               inputId = "interaction_glm", 
-               label = strong("Select interaction term(s)", style = "color:#003399"),
-               choices = NULL,
-               multiple = TRUE
-             ),
-             actionButton("actionBtnAdd_glm", "Create and add term(s)"),
-             uiOutput("uiAdded_glm"),
             tags$hr(),
-            actionButton("run_glm_model", "Run GLM")
-            ),
-            mainPanel(
-              width = 9,
-              tags$h4("What is a General Linear Model?", style = "color:#003399"),
-              tags$p("A General Linear Model (GLM) explains the relationship between a continuous dependent variable and one or more independent variables through a linear equation. GLMs assume a linear relationship between the dependent variable and predictors. If interactions are relevant, you can include them to assess whether the effect of one predictor depends on another."),
-              br(),
-              tags$h4("Why use GLMs for covariance analysis?", style = "color:#003399"),
-              tags$p("Fitting a GLM helps model residuals to uncover the covariance structure in longitudinal data. By specifying the outcome variable and mean structure (fixed effects), you can explore relationships among variables."),
-              br(),
-              uiOutput("glm_summaryUI"),
-              br(),
-              br()
+            # Data management
+            uiOutput("edit_vars"),
+            uiOutput("data_management"),
+            uiOutput("manage_data_options"),
+            uiOutput("var_name_extension"),
+            uiOutput("changes_button"),
+            tags$hr(),
+            tags$p(
+              "Use the ", strong("View Data"), " tab to preview your dataset and verify the data has been loaded correctly. 
+  Navigate to the ", strong("Data Summary"), " tab for descriptive statistics and variable distributions."
             )
-          )
-        ),
-        ###################################
-        # Covariance Analysis Tab
-        ###################################
-        tabPanel(
-          tags$p("Covariance Analysis", style = "color:#FF6600"),
-            fluidPage(
-              fluidRow(
-                column(width = 10, offset = 1,
-                       # Covariance analysis main content
-                       tags$h4("Understanding covariance structures", style = "color:#003399"),
-                       tags$p("In longitudinal data analysis, covariance structures are used to account for correlations between repeated measurements. The choice of covariance structure directly affects the interpretation of residuals, providing insights into the dependency between observations across time points or spatial dimensions. Residual plots, alongside the partial autocorrelation function (PACF), allow users to visualise the underlying covariance structure that adequately captures these dependencies."),
-                       tags$p("In this tab, we explore how different covariance structures influence the pattern of residuals and their autocorrelations. For instance, a compound symmetry (CS) structure suggests equal correlation across all observations, leading to a flat residual pattern. Autoregressive structures like AR1 or AR2, on the other hand, reflect time-dependent correlations, with residuals decaying or oscillating based on the lag between observations. The PACF helps further clarify these patterns, highlighting how residuals behave at various time lags, which can guide the selection of a suitable covariance structure for your data."),
-                       br(),
-                       
-                       checkboxInput("show_resid_info", "Show ideal plots of correlation structures", value = FALSE),
-                       conditionalPanel(
-                         
-                         condition = "input.show_resid_info == true",
-                         tags$h4("Ideal residual plots of common correlation structures", style = "color:#003399"),
-                         fluidRow(
-                           column(1, ),
-                           column(
-                             5, img(src = "unstr2.png", height = 420, align = "center"),
-                             br(),
-                             tags$p("No specific pattern. The correlation values vary widely across lags, and there is no clear trend. CAUTION: not of practical use because it is hard to estimate.")
-                           ),
-                           column(
-                             5, img(src = "compsymm.png", height = 420, align = "center"),
-                             br(),
-                             tags$p("A flat line at the constant correlation (rho). In a compound symmetry structure, the correlation is the same for all pairs of variables, regardless of the lag.")
-                           )
-                         ),
-                         br(),
-                         fluidRow(
-                           column(1, ),
-                           column(
-                             5, img(src = "ar1.png", height = 420, align = "center"),
-                             br(),
-                             tags$p("A declining line. As the lag increases, the correlation decreases exponentially. The correlation drops more rapidly for larger lags.")
-                           ),
-                           column(
-                             5, img(src = "ar2.png", height = 420, align = "center"),
-                             br(),
-                             tags$p("Oscillations in the average autocorrelation reflect the interplay between lag terms, with values alternating around zero, indicating no systematic bias.")
-                           )
-                         ),
-                         br(),
-                         br(),
-                         br(),
-                         tags$h4("Ideal PACF plots of common correlation structures", style = "color:#003399"),
-                         fluidRow(
-                           column(1, ),
-                           column(
-                             5, img(src = "unstrpacf.png", height = 420, align = "center"),
-                             br(),
-                             tags$p("No clear pattern or systematic decay in the partial autocorrelations. Significant spikes may appear at various lags, but without a consistent or interpretable pattern. The partial autocorrelations may fluctuate randomly around zero, with some lags potentially exceeding the significance bounds.")
-                           ),
-                           column(
-                             5, img(src = "cspacf.png", height = 420, align = "center"),
-                             br(),
-                             tags$p("A single significant spike at lag 1, indicating a constant correlation across all time points followed by a rapid decay towards 0 for the subsequent lags.")
-                           )
-                         ),
-                         br(),
-                         fluidRow(
-                           column(1, ),
-                           column(
-                             5, img(src = "ar1pacf.png", height = 420, align = "center"),
-                             br(),
-                             tags$p("A significant spike at lag 1, with subsequent lags showing values close to zero, reflecting the single-level decay of correlation over time.")
-                           ),
-                           column(
-                             5, img(src = "ar2pacf.png", height = 420, align = "center"),
-                             br(),
-                             tags$p("For an AR(p) process, the PACF will have significant spikes up to lag p, after which the values drop to zero, highlighting the true order of the autoregressive model. Here, there are 2 signicficant spikes indicating an AR(2) structure.")
-                           )
-                         )
-                       ),
-                       br(),
-                       uiOutput("residualsUI"),
-                       br()    
-                       )
-
-              ), 
-
-            )
-          
-        ),
-        ###################################
-        # Linear Mixed Model Tab
-        ###################################
-        tabPanel(
-          tags$p("Linear Mixed Model (LMM)", style = "color:#FF6600"),
-          sidebarLayout(
-            sidebarPanel(
-              width = 3,
-              # Linear mixed model sidebar content
-              tags$p(
-                strong("Instructions:", style = "color:#CC0000"), " Use this tab to fit a Linear Mixed Model (LMM) by selecting an outcome variable, fixed effects, the chosen residual covariance structure (from previous tab) and interaction terms if needed. Click 'Run LMM' to estimate the model and view the summary outputs."
+          ),
+          mainPanel(
+            width = 9,
+            # Data loading/uploading main content
+            tabsetPanel(
+              id = "datatabs",
+              # Data preview
+              tabPanel(
+                tags$p("View Data", style = "color:#003399"),
+                value = "datatab1",
+                br(), br(),
+                dataTableOutput("data_preview"),
+                br(), br(),
               ),
-              tags$hr(),
-              # variableSelectorUI("lmm_selector"),
-              selectizeInput(
-                inputId = "subject_id_lmm", label = strong("Select subject or ID variable", style = "color:#003399"),
-                choices = NULL,
-                multiple = FALSE
-              ),
-              selectizeInput(
-                inputId = "outcome_lmm", label = strong("Select outcome variable", style = "color:#003399"),
-                choices = NULL,
-                multiple = FALSE
-              ),
-              selectizeInput(
-                inputId = "timevar_lmm", label = strong("Select time variable", style = "color:#003399"),
-                choices = NULL,
-                multiple = FALSE
-              ),
-              selectizeInput(
-                inputId = "predictor_lmm", label = strong("Select fixed effects", style = "color:#003399"),
-                choices = NULL,
-                multiple = TRUE
-              ),
-              tags$hr(),
-              selectizeInput(
-                inputId = "interaction_lmm", label = strong("Select interaction term(s)", style = "color:#003399"),
-                choices = NULL,
-                multiple = TRUE
-              ),
-              actionButton("actionBtnAdd", "Create and add term(s)"),
-              uiOutput("uiAdded"),
-              tags$hr(),
-              selectInput("cov_structure",
-                          label = strong("Select covariance structure", style = "color:#003399"),
-                          choices = c(" ", "AR(p)", "CompSymm", "Exp", "Gaus", "Lin", "Ratio", "Spher", "Symm")
-              ),
-              tags$hr(),
-              conditionalPanel(
-                "input.cov_structure === 'AR(p)'",
-                selectInput(
-                  inputId = "ar_order", label = strong("Select autoregressive order", style = "color:#003399"),
-                  choices = 1:5
-                )
-              ),
-              tags$hr(),
-              checkboxInput(
-                inputId = "heteroscedastic_check",
-                label = "Include heteroscedastic variances (varIdent)",
-                value = FALSE
-              ),
-              # A warning message placeholder
-              uiOutput("hetero_warning"),
-              actionButton("run_lmm_model", "Run LMM"),
-            ),
-            
-            ########################################################################
-            mainPanel(
-              width = 9,
-              # Linear mixed model main content
-              tags$h4("What are Linear Mixed Models?", style = "color:#003399"),
-              tags$p("Linear Mixed Models (LMMs) are an extension of linear regression that can model longitudinal data by accounting for the correlation in repeated measurements."),
-              withMathJax(
-                tags$p("The model is often represented as: \\(y_i = X_i β + Z_i b_i + ε_i\\), where \\(b_i \\sim N(0, D)\\), \\(ε_i \\sim N(0, Σ_i)\\)"),
-                tags$p("Here, \\(X_i\\) and \\(Z_i\\) are the fixed and random design matrices, respectively. The vector \\(β\\) represents the fixed effects, which describe the mean response in the population, while \\(b_i\\) represents the random effects, capturing individual-specific deviations. The term \\(ε_i\\) refers to the random error, representing unexplained variability in the data. \\(D\\) is the covariance matrix for the random effects, while \\(Σ_i\\) specifies the covariance structure for the residuals.")
-              ),
-              tags$p("The LMM accommodates both fixed and random effects to model the within-subject and between-subject variability. The model can be formulated hierachically or marginally to capture the correlation. In the", em(" hierachical formulation,", style = "color:#FF6600"), "given the random effects, the measurements of each subject are independent (conditional independence assumption), meaning the more random effects we include the more flexibly we capture the correlations. In the", em(" marginal formulation,", style = "color:#FF6600"), "the measurements of each subject are correlated and this correlation is estimated by the marginal covariance matrix."),
-              tags$p(strong("This app focuses on the marginal formulation.")),
-              br(),
-              tags$h4("Variance Components", style = "color:#003399"),
-              withMathJax(
-                tags$p("In the marginal formulation, the covariance matrix of the outcome variable \\(y_i\\) is given by: \\(V_i = Z_i D Z_i' + Σ_i\\)")
-              ),
-              tags$p("We need an appropriate choice for \\(V_i\\) in order to appropriately
-describe the correlations between the repeated measurements."),
-              br(),
-              tags$h4("Application", style = "color:#003399"),
-              tags$p("In practice, valid and efficient inferences for the fixed effects require an appropriately specified marginal covariance structure. This ensures that the correlation between repeated measurements is accounted for, reducing bias in the estimation of fixed effects."),
-              tags$p("This app allows users to focus on modeling the marginal covariance structure, ensuring robust model fitting. The choice of covariance structure influences both the variance component estimates and the accuracy of hypothesis testing for fixed effects."),
-              br(),
-              uiOutput("lmm_summaryUI")
-            )
-            
-          )
-        ),
-        ###################################
-        # Reports Tab
-        ###################################
-        tabPanel(
-          tags$p("Reports", style = "color:#FF6600"),
-          sidebarLayout(
-            sidebarPanel(
-              width = 3,
-              tags$p(
-                strong("Generate a report summarizing your analyses. Choose a format (HTML, PDF, or Word) and click the button to download.", style = "color:#003399")
-              ),
-              tags$hr(),
-              # Report generation sidebar content
-              selectInput("report_format", label = strong("Select Report Format", style = "color:#003399"), choices = c("HTML (Recommended)" = "HTML", "PDF" = "PDF", "Word" = "Word")),
-              downloadButton("download_report", "Download Report")
-            ),
-            mainPanel(
-              width = 9,
-              tags$p("This dynamic report includes the following sections:"),
-              tags$ol(
-                tags$li("GLM Analysis", style = "color:#003399"),
-                tags$p("Summary and plots from the General Linear Model (GLM) analysis."),
-                tags$li("Covariance Analysis", style = "color:#003399"),
-                tags$p("Details of the covariance structures used and their impact on the model."),
-                tags$li("LMM Analysis", style = "color:#003399"),
-                tags$p("Results and plots from the Linear Mixed Model (LMM) analysis.")
+              # Data summary
+              tabPanel(
+                tags$p("Data Summary", style = "color:#003399"),
+                value = "datatab2",
+                # br(), br(),
+                # h5(strong("Data summary")),
+                htmlOutput("data_summ"),
+                br(), br(),
               )
             )
           )
         )
       ),
-    
+      ###################################
+      # Fixed Effects Model Tab
+      ###################################
+      tabPanel(
+        tags$p("General Linear Model (GLM)", style = "color:#FF6600"),
+        sidebarLayout(
+          sidebarPanel(
+            width = 3,
+            # style = "position: fixed; ",
+            #    # Help Text for Users
+            tags$p(
+              strong("Instructions:", style = "color:#CC0000"), " Use this tab to fit a General Linear Model (GLM) by selecting an outcome variable, fixed effects, and interaction terms if needed. Click 'Run GLM' to estimate the model and view the summary output."
+            ),
+            tags$hr(),
+            # Fixed effects model sidebar content
+            selectizeInput(
+              inputId = "subject_id_glm", label = strong("Select subject or ID variable", style = "color:#003399"),
+              choices = NULL,
+              multiple = FALSE
+            ),
+            selectizeInput(
+              inputId = "outcome_glm", label = strong("Select outcome variable", style = "color:#003399"),
+              choices = NULL,
+              multiple = FALSE
+            ),
+            selectizeInput(
+              inputId = "timevar_glm", label = strong("Select time variable", style = "color:#003399"),
+              choices = NULL,
+              multiple = FALSE
+            ),
+            selectizeInput(
+              inputId = "predictor_glm", label = strong("Select fixed effects", style = "color:#003399"),
+              choices = NULL,
+              multiple = TRUE
+            ),
+            tags$hr(),
+            selectizeInput(
+              inputId = "interaction_glm",
+              label = strong("Select interaction term(s)", style = "color:#003399"),
+              choices = NULL,
+              multiple = TRUE
+            ),
+            actionButton("actionBtnAdd_glm", "Create and add term(s)"),
+            uiOutput("uiAdded_glm"),
+            tags$hr(),
+            actionButton("run_glm_model", "Run GLM")
+          ),
+          mainPanel(
+            width = 9,
+            tags$h4("What is a General Linear Model?", style = "color:#003399"),
+            tags$p("A General Linear Model (GLM) explains the relationship between a continuous dependent variable and one or more independent variables through a linear equation. GLMs assume a linear relationship between the dependent variable and predictors. If interactions are relevant, you can include them to assess whether the effect of one predictor depends on another."),
+            br(),
+            tags$h4("Why use GLMs for covariance analysis?", style = "color:#003399"),
+            tags$p("Fitting a GLM helps model residuals to uncover the covariance structure in longitudinal data. By specifying the outcome variable and mean structure (fixed effects), you can explore relationships among variables."),
+            br(),
+            uiOutput("glm_summaryUI"),
+            br(),
+            br()
+          )
+        )
+      ),
+      ###################################
+      # Covariance Analysis Tab
+      ###################################
+      tabPanel(
+        tags$p("Covariance Analysis", style = "color:#FF6600"),
+        fluidPage(
+          fluidRow(
+            column(
+              width = 10, offset = 1,
+              # Covariance analysis main content
+              tags$h4("Understanding covariance structures", style = "color:#003399"),
+              tags$p("In longitudinal data analysis, covariance structures are used to account for correlations between repeated measurements. The choice of covariance structure directly affects the interpretation of residuals, providing insights into the dependency between observations across time points or spatial dimensions. Residual plots, alongside the partial autocorrelation function (PACF), allow users to visualise the underlying covariance structure that adequately captures these dependencies."),
+              tags$p("In this tab, we explore how different covariance structures influence the pattern of residuals and their autocorrelations. For instance, a compound symmetry (CS) structure suggests equal correlation across all observations, leading to a flat residual pattern. Autoregressive structures like AR1 or AR2, on the other hand, reflect time-dependent correlations, with residuals decaying or oscillating based on the lag between observations. The PACF helps further clarify these patterns, highlighting how residuals behave at various time lags, which can guide the selection of a suitable covariance structure for your data."),
+              br(),
+              checkboxInput("show_resid_info", "Show ideal plots of correlation structures", value = FALSE),
+              conditionalPanel(
+                condition = "input.show_resid_info == true",
+                tags$h4("Ideal residual plots of common correlation structures", style = "color:#003399"),
+                fluidRow(
+                  column(1, ),
+                  column(
+                    5, img(src = "unstr2.png", height = 420, align = "center"),
+                    br(),
+                    tags$p("No specific pattern. The correlation values vary widely across lags, and there is no clear trend. CAUTION: not of practical use because it is hard to estimate.")
+                  ),
+                  column(
+                    5, img(src = "compsymm.png", height = 420, align = "center"),
+                    br(),
+                    tags$p("A flat line at the constant correlation (rho). In a compound symmetry structure, the correlation is the same for all pairs of variables, regardless of the lag.")
+                  )
+                ),
+                br(),
+                fluidRow(
+                  column(1, ),
+                  column(
+                    5, img(src = "ar1.png", height = 420, align = "center"),
+                    br(),
+                    tags$p("A declining line. As the lag increases, the correlation decreases exponentially. The correlation drops more rapidly for larger lags.")
+                  ),
+                  column(
+                    5, img(src = "ar2.png", height = 420, align = "center"),
+                    br(),
+                    tags$p("Oscillations in the average autocorrelation reflect the interplay between lag terms, with values alternating around zero, indicating no systematic bias.")
+                  )
+                ),
+                br(),
+                br(),
+                br(),
+                tags$h4("Ideal PACF plots of common correlation structures", style = "color:#003399"),
+                fluidRow(
+                  column(1, ),
+                  column(
+                    5, img(src = "unstrpacf.png", height = 420, align = "center"),
+                    br(),
+                    tags$p("No clear pattern or systematic decay in the partial autocorrelations. Significant spikes may appear at various lags, but without a consistent or interpretable pattern. The partial autocorrelations may fluctuate randomly around zero, with some lags potentially exceeding the significance bounds.")
+                  ),
+                  column(
+                    5, img(src = "cspacf.png", height = 420, align = "center"),
+                    br(),
+                    tags$p("A single significant spike at lag 1, indicating a constant correlation across all time points followed by a rapid decay towards 0 for the subsequent lags.")
+                  )
+                ),
+                br(),
+                fluidRow(
+                  column(1, ),
+                  column(
+                    5, img(src = "ar1pacf.png", height = 420, align = "center"),
+                    br(),
+                    tags$p("A significant spike at lag 1, with subsequent lags showing values close to zero, reflecting the single-level decay of correlation over time.")
+                  ),
+                  column(
+                    5, img(src = "ar2pacf.png", height = 420, align = "center"),
+                    br(),
+                    tags$p("For an AR(p) process, the PACF will have significant spikes up to lag p, after which the values drop to zero, highlighting the true order of the autoregressive model. Here, there are 2 signicficant spikes indicating an AR(2) structure.")
+                  )
+                )
+              ),
+              br(),
+              uiOutput("residualsUI"),
+              br()
+            )
+          ),
+        )
+      ),
+      ###################################
+      # Linear Mixed Model Tab
+      ###################################
+      tabPanel(
+        tags$p("Linear Mixed Model (LMM)", style = "color:#FF6600"),
+        sidebarLayout(
+          sidebarPanel(
+            width = 3,
+            # Linear mixed model sidebar content
+            tags$p(
+              strong("Instructions:", style = "color:#CC0000"), " Use this tab to fit a Linear Mixed Model (LMM) by selecting an outcome variable, fixed effects, the chosen residual covariance structure (from previous tab) and interaction terms if needed. Click 'Run LMM' to estimate the model and view the summary outputs."
+            ),
+            tags$hr(),
+            # variableSelectorUI("lmm_selector"),
+            selectizeInput(
+              inputId = "subject_id_lmm", label = strong("Select subject or ID variable", style = "color:#003399"),
+              choices = NULL,
+              multiple = FALSE
+            ),
+            selectizeInput(
+              inputId = "outcome_lmm", label = strong("Select outcome variable", style = "color:#003399"),
+              choices = NULL,
+              multiple = FALSE
+            ),
+            selectizeInput(
+              inputId = "timevar_lmm", label = strong("Select time variable", style = "color:#003399"),
+              choices = NULL,
+              multiple = FALSE
+            ),
+            selectizeInput(
+              inputId = "predictor_lmm", label = strong("Select fixed effects", style = "color:#003399"),
+              choices = NULL,
+              multiple = TRUE
+            ),
+            tags$hr(),
+            selectizeInput(
+              inputId = "interaction_lmm", label = strong("Select interaction term(s)", style = "color:#003399"),
+              choices = NULL,
+              multiple = TRUE
+            ),
+            actionButton("actionBtnAdd", "Create and add term(s)"),
+            uiOutput("uiAdded"),
+            tags$hr(),
+            selectInput("cov_structure",
+              label = strong("Select covariance structure", style = "color:#003399"),
+              choices = c(" ", "AR(p)", "CompSymm", "Exp", "Gaus", "Lin", "Ratio", "Spher", "Symm")
+            ),
+            tags$hr(),
+            conditionalPanel(
+              "input.cov_structure === 'AR(p)'",
+              selectInput(
+                inputId = "ar_order", label = strong("Select autoregressive order", style = "color:#003399"),
+                choices = 1:5
+              )
+            ),
+            tags$hr(),
+            checkboxInput(
+              inputId = "heteroscedastic_check",
+              label = "Include heteroscedastic variances (varIdent)",
+              value = FALSE
+            ),
+            # A warning message placeholder
+            uiOutput("hetero_warning"),
+            actionButton("run_lmm_model", "Run LMM"),
+          ),
+
+          ########################################################################
+          mainPanel(
+            width = 9,
+            # Linear mixed model main content
+            tags$h4("What are Linear Mixed Models?", style = "color:#003399"),
+            tags$p("Linear Mixed Models (LMMs) are an extension of linear regression that can model longitudinal data by accounting for the correlation in repeated measurements."),
+            withMathJax(
+              tags$p("The model is often represented as: \\(y_i = X_i β + Z_i b_i + ε_i\\), where \\(b_i \\sim N(0, D)\\), \\(ε_i \\sim N(0, Σ_i)\\)"),
+              tags$p("Here, \\(X_i\\) and \\(Z_i\\) are the fixed and random design matrices, respectively. The vector \\(β\\) represents the fixed effects, which describe the mean response in the population, while \\(b_i\\) represents the random effects, capturing individual-specific deviations. The term \\(ε_i\\) refers to the random error, representing unexplained variability in the data. \\(D\\) is the covariance matrix for the random effects, while \\(Σ_i\\) specifies the covariance structure for the residuals.")
+            ),
+            tags$p("The LMM accommodates both fixed and random effects to model the within-subject and between-subject variability. The model can be formulated hierachically or marginally to capture the correlation. In the", em(" hierachical formulation,", style = "color:#FF6600"), "given the random effects, the measurements of each subject are independent (conditional independence assumption), meaning the more random effects we include the more flexibly we capture the correlations. In the", em(" marginal formulation,", style = "color:#FF6600"), "the measurements of each subject are correlated and this correlation is estimated by the marginal covariance matrix."),
+            tags$p(strong("This app focuses on the marginal formulation.")),
+            br(),
+            tags$h4("Variance Components", style = "color:#003399"),
+            withMathJax(
+              tags$p("In the marginal formulation, the covariance matrix of the outcome variable \\(y_i\\) is given by: \\(V_i = Z_i D Z_i' + Σ_i\\)")
+            ),
+            tags$p("We need an appropriate choice for \\(V_i\\) in order to appropriately
+describe the correlations between the repeated measurements."),
+            br(),
+            tags$h4("Application", style = "color:#003399"),
+            tags$p("In practice, valid and efficient inferences for the fixed effects require an appropriately specified marginal covariance structure. This ensures that the correlation between repeated measurements is accounted for, reducing bias in the estimation of fixed effects."),
+            tags$p("This app allows users to focus on modeling the marginal covariance structure, ensuring robust model fitting. The choice of covariance structure influences both the variance component estimates and the accuracy of hypothesis testing for fixed effects."),
+            br(),
+            uiOutput("lmm_summaryUI")
+          )
+        )
+      ),
+      ###################################
+      # Reports Tab
+      ###################################
+      tabPanel(
+        tags$p("Reports", style = "color:#FF6600"),
+        sidebarLayout(
+          sidebarPanel(
+            width = 3,
+            tags$p(
+              strong("Generate a report summarizing your analyses. Choose a format (HTML, PDF, or Word) and click the button to download.", style = "color:#003399")
+            ),
+            tags$hr(),
+            # Report generation sidebar content
+            selectInput("report_format", label = strong("Select Report Format", style = "color:#003399"), choices = c("HTML (Recommended)" = "HTML", "PDF" = "PDF", "Word" = "Word")),
+            downloadButton("download_report", "Download Report")
+          ),
+          mainPanel(
+            width = 9,
+            tags$p("This dynamic report includes the following sections:"),
+            tags$ol(
+              tags$li("GLM Analysis", style = "color:#003399"),
+              tags$p("Summary and plots from the General Linear Model (GLM) analysis."),
+              tags$li("Covariance Analysis", style = "color:#003399"),
+              tags$p("Details of the covariance structures used and their impact on the model."),
+              tags$li("LMM Analysis", style = "color:#003399"),
+              tags$p("Results and plots from the Linear Mixed Model (LMM) analysis.")
+            )
+          )
+        )
+      )
+    ),
+
     ###################################
     # Manual Tab
     ###################################
@@ -499,41 +497,48 @@ describe the correlations between the repeated measurements."),
         tags$hr(),
         tags$h3("Steps on how to use the LiMMCov app"),
         br(),
-        
         tags$h4("Step 1: Load data"),
         tags$p(
-          "Begin by selecting an example dataset or uploading your data file. You can do this in the ", 
+          "Begin by selecting an example dataset or uploading your data file. You can do this in the ",
           strong("Data Input"), " sidebar tab. Make sure to choose the correct file extension to ensure proper data loading."
         ),
         tags$p(
-          "If you need to change the data type of a variable, select the variable in question and then choose the ", em("New data type."), "Apply changes by clicking the ", em("Change data type"), " button."
+          "If you need to change the data type of a variable, select the variable in question and then choose the ",
+          em("New data type."), "Apply changes by clicking the ", em("Change data type"), " button."
         ),
         tags$p(
-          "To verify that the data has been loaded correctly, check the ", strong("View Data"), " tab, which displays a preview (10 rows by default). You can adjust this setting through the ", 
-          em("Show entries"), " dropdown. A summary of your dataset, including descriptive statistics and variable distributions, can be found in the ", 
+          "To verify that the data has been loaded correctly, check the ", strong("View Data"), " tab, which displays a preview (10 rows by default). You can adjust this setting through the ",
+          em("Show entries"), " dropdown. A summary of your dataset, including descriptive statistics and variable distributions, can be found in the ",
           strong("Data Summary"), " tab."
         ),
         br(),
-        
+        # tags$p(
+        #   strong("Note on Missing Data: "),
+        #   "LiMMCov requires complete datasets, so we recommend handling missing values before uploading. While multiple imputation is one possible strategy, other approaches (e.g., full information maximum likelihood, inverse probability weighting) may be more appropriate depending on factors like sample size or missing not at random (MNAR) data. Because LiMMCov focuses on choosing the covariance structure, data preprocessing and imputation lie outside the app’s scope. We encourage users to consult the relevant literature or references for best practices in addressing missingness, ensuring the validity of subsequent analyses."
+        # ),
+        tags$p(
+          strong("Note on Missing Data: "),
+          "LiMMCov requires complete datasets, so we recommend handling missing values before uploading. While multiple imputation is one possible strategy, other approaches (e.g., full information maximum likelihood, inverse probability weighting) may be more appropriate depending on factors like sample size or missing not at random (MNAR) data. Because LiMMCov focuses on choosing the covariance structure, data preprocessing and imputation lie outside the app’s scope. We encourage users to consult the references below for best practices in addressing missingness, ensuring the validity of subsequent analyses:"
+        ),
+        tags$ul(
+          tags$li("Molenberghs G, Fitzmaurice G, Kenward MG, Tsiatis A, Verbeke G. Handbook of missing data methodology. CRC Press; 2014."),
+          tags$li("Nooraee N, Molenberghs G, Ormel J, Van den Heuvel ER. Strategies for handling missing data in longitudinal studies with questionnaires. J Stat Comput Simul. 2018;88(17):3415–36. https://doi.org/10.1080/00949655.2018.1520854"),
+          tags$li("Ji L, Chow SM, Schermerhorn AC, Jacobson NC, Cummings EM. Handling Missing Data in the Modeling of Intensive Longitudinal Data. Struct Equ Model. 2018;25(5):715–36. https://doi.org/10.1080/10705511.2017.1417046"),
+          tags$li("Heymans MW, Twisk JWR. Handling missing data in clinical research. J Clin Epidemiol. 2022;151:185–8. https://doi.org/10.1016/j.jclinepi.2022.08.01")
+        ),
+        br(),
         tags$h4("Step 2: Fit linear model (GLM)"),
         tags$p(
-          "Next, specify the variables for the model. Start by selecting the subject/id, outcome variable, and the desired mean structure in the", strong("General Linear Model (GLM)"), "tab."),
+          "Next, specify the variables for the model. Start by selecting the subject/id, outcome variable, and the desired mean structure in the", strong("General Linear Model (GLM)"), "tab."
+        ),
         tags$p(
           "After specifying the model, click the ", em("Run GLM"), " button to fit the model. You can view the model results under the ", em("Model Summary"), " section."
         ),
         br(),
-        
         tags$h4("Step 3: Analyse the covariance"),
         tags$p("Use the ", strong("Covariance Analysis"), " tab to explore the underlying covariance structure of the residuals. It provides insights into the correlation structure of residuals from the GLM. Residual plots help identify specific patterns related to different correlation structures, while PACF plots provide further insight."),
         br(),
         tags$p(em("Interpreting Residual Plots and PACF:")),
-        # tags$ul(
-        #   tags$li(tags$b("Compound Symmetry (CS): "), "Residuals show a flat line across all lags. In the PACF, a single spike at lag 1 indicates constant correlation."),
-        #   tags$li(tags$b("Autoregressive Order 1 (AR1): "), "Residuals decline linearly as correlation decays exponentially with increasing lag. The PACF shows a significant spike at lag 1, with subsequent lags close to zero."),
-        #   tags$li(tags$b("Autoregressive Order 2 (AR2): "), "Residuals oscillate around zero, capturing interactions between lag terms. The PACF typically shows significant spikes at lags 1 and 2."),
-        #   tags$li(tags$b("AR(p): "), "PACF will have significant spikes up to lag p, reflecting the autoregressive model's true order.")
-        # ),
-        # br(),
         tags$p("Use this quick reference guide to determine the appropriate covariance structure based on your residual plots and PACF patterns:"),
         tags$ul(
           tags$li(tags$b("Step 1: "), "Examine the residual plot. If there is no correlation (flat line across all lags), use Compound Symmetry (CS)."),
@@ -546,8 +551,8 @@ describe the correlations between the repeated measurements."),
           )
         ),
         tags$br(),
-        tags$p("Refer to the decision tree below for a visual representation:"),
-        img(src = "decision_tree.png", height = "400px", width = "600px", align = "center"), 
+        # tags$p("Refer to the decision tree below for a visual representation:"),
+        img(src = "decision_tree.png", height = "400px", width = "600px", align = "center"),
         tags$br(),
         tags$br(),
         tags$p("The following covariance structures are available in the nlme package, each with different applications:"),
@@ -600,10 +605,9 @@ describe the correlations between the repeated measurements."),
           )
         ),
         br(),
-        
         tags$h4("Step 4: Fit linear mixed model (LMM)"),
         tags$p(
-          "To fit a linear mixed model, select the subject/id, outcome, time variables, and fixed effects. If your model includes interaction terms, define them using the ", 
+          "To fit a linear mixed model, select the subject/id, outcome, time variables, and fixed effects. If your model includes interaction terms, define them using the ",
           em("Select interaction term(s)"), " field."
         ),
         tags$p(
@@ -616,13 +620,11 @@ describe the correlations between the repeated measurements."),
           "To compare different models, refer to the AIC table. The model with the lowest AIC is generally considered the best-fitting model. If convergence issues occur, they will be flagged in the AIC column."
         ),
         br(),
-        
         tags$h4("Step 5: Generate a report"),
         tags$p(
           "After your analysis, you can generate a report by selecting the desired format (HTML, PDF, or Word). This report includes a summary of the linear model, covariance analysis, and the best-fitting linear mixed model, along with plots."
         ),
         br(),
-        
         tags$h4("Note"),
         tags$p(
           "At any time, you can refresh the session and start over by clicking the ", strong("Power"), " button."
@@ -634,8 +636,8 @@ describe the correlations between the repeated measurements."),
         br()
       )
     ),
-    
-    
+
+
     ###################################
     # Contact Us Tab
     ###################################
@@ -665,7 +667,7 @@ describe the correlations between the repeated measurements."),
         )
       ),
       # Footer
-      #tags$hr(),
+      # tags$hr(),
       absolutePanel(
         bottom = 10,
         left = 0,
@@ -675,7 +677,7 @@ describe the correlations between the repeated measurements."),
         tags$div(
           style = "text-align: left; width: 100%; padding: 10px;",
           tags$h6(
-            em("Copyright 2025. Support for Quantitative and Qualitative Research. Version 06.03.25")
+            em("Copyright 2025. Support for Quantitative and Qualitative Research. Version 28.03.25")
           )
         )
       )
@@ -872,19 +874,19 @@ server <- function(input, output, session) {
       updateSelectizeInput(session, "interaction_lmm", choices = c("", value), server = TRUE)
     }
   })
-  
+
   #------------------------------------------
   # Create list of interaction terms for GLM
   listN_glm <- reactiveValues()
   makeReactiveBinding("listN_glm")
-  
+
   # Rendering the list of added interactions to the UI
   output$uiAdded_glm <- renderUI({
     checkboxGroupInput("added_glm", "",
-                       choices = names(listN_glm)
+      choices = names(listN_glm)
     )
   })
-  
+
   # Trigger Add actions for GLM interactions
   observe({
     input$actionBtnAdd_glm
@@ -893,11 +895,11 @@ server <- function(input, output, session) {
       new_selections_name <- new_selections %>% paste(collapse = "*")
       if (new_selections_name != "") {
         listN_glm[[new_selections_name]] <- new_selections
-      } 
+      }
     })
   })
-  
-#--------------------------------------------
+
+  #--------------------------------------------
   # Create list of interaction terms for LMM
   listN <- reactiveValues()
   makeReactiveBinding("listN")
@@ -913,32 +915,31 @@ server <- function(input, output, session) {
   observe({
     input$actionBtnAdd
     isolate({
-      
-        new_selections <- c(input$interaction_lmm)
+      new_selections <- c(input$interaction_lmm)
       new_selections_name <- new_selections %>% paste(collapse = "*")
 
       if (new_selections_name != "") {
         listN[[new_selections_name]] <- new_selections
-      } 
+      }
     })
   })
-  
+
   # Run the generalised linear model
   # glm_model <- reactive({
   #   req(input$run_glm_model)
   #   predictors <- paste(input$predictor_glm, collapse = "+")
-  #   
+  #
   #   # Construct the formula with interactions if any
   #   if (!is.null(input$added_glm)) {
   #     interaction_terms <- paste(input$added_glm, collapse = " + ")
   #     formula_str <- paste(input$outcome_glm, "~", input$timevar_glm)
-  #     
+  #
   #     if (!is.null(input$predictor_glm)) {
   #       formula_str <- paste(formula_str, "+", predictors)
   #     }
-  #     
+  #
   #     formula_str <- paste(formula_str, "+", interaction_terms)
-  #     
+  #
   #     gls(as.formula(formula_str), data = dataset())
   #   } else {
   #     # Original logic without interactions
@@ -949,37 +950,37 @@ server <- function(input, output, session) {
   #     }
   #   }
   # })
-  
+
   glm_model <- reactive({
     req(input$run_glm_model)
-    
+
     # Build up the formula string
     predictors <- paste(input$predictor_glm, collapse = "+")
     formula_str <- paste(input$outcome_glm, "~", input$timevar_glm)
-    
+
     # If there are main-effect predictors
     if (!is.null(input$predictor_glm)) {
       formula_str <- paste(formula_str, "+", predictors)
     }
-    
+
     # If there are interaction terms
     if (!is.null(input$added_glm)) {
       interaction_terms <- paste(input$added_glm, collapse = " + ")
       formula_str <- paste(formula_str, "+", interaction_terms)
     }
-    
+
     # Convert to a proper formula object
     form_obj <- as.formula(formula_str)
-    
+
     # Fit the model with the explicit formula in the call
     mod <- gls(model = form_obj, data = dataset())
-    
+
     # Update the call attribute to show the proper formula
     mod$call$model <- form_obj
-    
+
     return(mod)
   })
-  
+
   # Generate a summary of the regression model
   output$glm_summaryUI <- renderUI({
     req(glm_model())
@@ -989,14 +990,14 @@ server <- function(input, output, session) {
       uiOutput("glm_model_summary"),
       br(), br(), br(), br(),
       tags$h4(strong("Click on the Covariance Analysis tab to continue."), style = "color:#FF6600")
-      )
+    )
   })
 
   output$glm_model_summary <- renderUI({
     tab <- tab_model(glm_model())
     HTML(tab$knitr)
   })
-  
+
   # Residuals from fixed effects model
   glm_residuals <- reactive({
     # Extract residuals
@@ -1070,23 +1071,23 @@ server <- function(input, output, session) {
   # Reactive formula for GLS model
   gls_formula <- reactive({
     req(input$outcome_lmm, input$timevar_lmm)
-    
+
     # Collect all terms: timevar, predictors, and interactions
     all_terms <- c(input$timevar_lmm, input$predictor_lmm, input$added)
-    
+
     # Remove any empty strings (if present)
     all_terms <- all_terms[nzchar(all_terms)]
-    
+
     # Construct the formula string
     formula_str <- paste(
-      input$outcome_lmm, 
-      "~", 
+      input$outcome_lmm,
+      "~",
       paste(all_terms, collapse = "+")
     )
-    
+
     as.formula(formula_str)
   })
-  
+
   # Function to generate the correlation structure string
   cor_structure <- function(structure) {
     req(input$subject_id_lmm)
@@ -1096,34 +1097,34 @@ server <- function(input, output, session) {
       return(paste0("corARMA(form = ~ 1 | ", input$subject_id_lmm, ", p = ", order, ")"))
     }
     switch(structure,
-           "CompSymm" = paste0("corCompSymm(form = ~ 1 | ", input$subject_id_lmm, ")"),
-           "Exp" = paste0("corExp(form = ~ 1 | ", input$subject_id_lmm, ")"),
-           "Gaus" = paste0("corGaus(form = ~ 1 | ", input$subject_id_lmm, ")"),
-           "Lin" = paste0("corLin(form = ~ 1 | ", input$subject_id_lmm, ")"),
-           "Ratio" = paste0("corRatio(form = ~ 1 | ", input$subject_id_lmm, ")"),
-           "Spher" = paste0("corSpher(form = ~ 1 | ", input$subject_id_lmm, ")"),
-           "Symm" = paste0("corSymm(form = ~ 1 | ", input$subject_id_lmm, ")")
+      "CompSymm" = paste0("corCompSymm(form = ~ 1 | ", input$subject_id_lmm, ")"),
+      "Exp" = paste0("corExp(form = ~ 1 | ", input$subject_id_lmm, ")"),
+      "Gaus" = paste0("corGaus(form = ~ 1 | ", input$subject_id_lmm, ")"),
+      "Lin" = paste0("corLin(form = ~ 1 | ", input$subject_id_lmm, ")"),
+      "Ratio" = paste0("corRatio(form = ~ 1 | ", input$subject_id_lmm, ")"),
+      "Spher" = paste0("corSpher(form = ~ 1 | ", input$subject_id_lmm, ")"),
+      "Symm" = paste0("corSymm(form = ~ 1 | ", input$subject_id_lmm, ")")
     )
   }
-  
+
   # # Helper function to fit models
   # fit_model <- function(form, correlation) {
   #   # 'form' is expected to be a formula object
   #   # Convert it to a single-line character string
   #   form_str <- paste(deparse(form, width.cutoff = 500), collapse = " ")
-  #   
+  #
   #   # Build the function call as a single string
   #   final_call <- paste0(
   #     "gls(",
-  #     form_str, 
-  #     ", data = dataset(), correlation = ", 
-  #     correlation, 
+  #     form_str,
+  #     ", data = dataset(), correlation = ",
+  #     correlation,
   #     ")"
   #   )
-  #   
+  #
   #   # Print for debugging
   #   #print(final_call)
-  #   
+  #
   #   # Safely evaluate
   #   tryCatch(
   #     eval(parse(text = final_call)),
@@ -1133,27 +1134,27 @@ server <- function(input, output, session) {
   #     }
   #   )
   # }
-  
+
   # MODIFY: Update fit_model() to accept weights
   fit_model <- function(form, correlation, weights = NULL) {
     req(form, correlation)
-    
+
     # Convert formula to a string
     form_str <- paste(deparse(form, width.cutoff = 500), collapse = " ")
-    
+
     # Build the gls() call
     final_call <- paste0(
-      "gls(", form_str, 
+      "gls(", form_str,
       ", data = dataset(), 
        correlation = ", correlation
     )
-    
+
     # Add weights if specified
     if (!is.null(weights)) {
       final_call <- paste0(final_call, ", weights = ", weights)
     }
     final_call <- paste0(final_call, ")")
-    
+
     # Evaluate safely
     tryCatch(
       eval(parse(text = final_call)),
@@ -1170,26 +1171,26 @@ server <- function(input, output, session) {
     # Instead of passing deparse(gls_formula()) directly,
     # pass the formula object, letting fit_model handle deparsing
     fit_model(
-      form = gls_formula(), 
+      form = gls_formula(),
       correlation = cor_structure(input$cov_structure)
     )
   })
-  
+
   # Reactive for the heteroscedastic model
   heteroscedastic_model <- reactive({
     req(input$heteroscedastic_check, input$cov_structure, input$subject_id_lmm)
-    
+
     # Define weights structure (varIdent per subject)
     weights_str <- paste0("varIdent(form = ~1 | ", input$subject_id_lmm, ")")
-    
+
     # Fit model with selected correlation + heteroscedastic variance
     fit_model(
       form = gls_formula(),
       correlation = cor_structure(input$cov_structure),
-      weights = weights_str  # Pass weights argument
+      weights = weights_str # Pass weights argument
     )
   })
-  
+
   # Show warning when heteroscedastic model is selected
   output$hetero_warning <- renderUI({
     if (input$heteroscedastic_check) {
@@ -1199,140 +1200,139 @@ server <- function(input, output, session) {
       )
     }
   })
-  
+
   # Reactive block for alternative models
   fit_alternative_models <- reactive({
-    req(input$run_lmm_model) 
-    
+    req(input$run_lmm_model)
+
     # The full set of correlation structures
     all_structures <- c(
-      "AR(p)", "CompSymm", "Exp", "Gaus", 
+      "AR(p)", "CompSymm", "Exp", "Gaus",
       "Lin", "Ratio", "Spher", "Symm"
     )
     remaining_structures <- setdiff(all_structures, input$cov_structure)
-    
+
     # Fit each remaining structure
     models <- lapply(remaining_structures, function(structure) {
       fit_model(
-        form = gls_formula(), 
+        form = gls_formula(),
         correlation = cor_structure(structure)
       )
     })
-    
+
     # Name the list of models after their structures
     names(models) <- remaining_structures
-    
+
     models
   })
- 
-    # Helper function to safely get AIC or BIC
-    safe_stat <- function(model, stat = "AIC") {
-      if (is.null(model)) "Model did not converge" else round(get(stat)(model), 2)
+
+  # Helper function to safely get AIC or BIC
+  safe_stat <- function(model, stat = "AIC") {
+    if (is.null(model)) "Model did not converge" else round(get(stat)(model), 2)
+  }
+
+  # Combine AICs and BICs into a table
+  # comparison_table <- reactive({
+  #   req(input$run_lmm_model)
+  #
+  #   # Initial model's AIC and BIC
+  #   first_model_aic <- safe_stat(initial_model(), "AIC")
+  #   first_model_bic <- safe_stat(initial_model(), "BIC")
+  #   first_model_aicc <- safe_stat(initial_model(), "AICc")
+  #
+  #   # AIC and BIC for alternative models
+  #   models <- fit_alternative_models()
+  #   alternative_aics <- sapply(models, safe_stat, stat = "AIC")
+  #   alternative_bics <- sapply(models, safe_stat, stat = "BIC")
+  #   alternative_aiccs <- sapply(models, safe_stat, stat = "AICc")
+  #
+  #   selected_ar <- paste0("AR(", input$ar_order, ") (selected correlation structure)")
+  #
+  #   # Create table
+  #   data.frame(
+  # "Correlation Structure" = c(
+  #   ifelse(input$cov_structure == "AR(p)", selected_ar, paste(input$cov_structure, "(selected correlation structure)")),
+  #   names(alternative_aics)
+  # ),
+  #     "AIC" = c(first_model_aic, alternative_aics),
+  #     "BIC" = c(first_model_bic, alternative_bics),
+  #     "AICc" = c(first_model_aicc, alternative_aiccs),
+  #     stringsAsFactors = FALSE
+  #   )
+  # })
+
+  comparison_table <- reactive({
+    req(input$run_lmm_model)
+
+    # Initial model (homoscedastic)
+    first_model_aic <- safe_stat(initial_model(), "AIC")
+    first_model_bic <- safe_stat(initial_model(), "BIC")
+    first_model_aicc <- safe_stat(initial_model(), "AICc")
+
+    # Heteroscedastic model (if selected)
+    if (input$heteroscedastic_check) {
+      hetero_model <- heteroscedastic_model()
+      hetero_aic <- safe_stat(hetero_model, "AIC")
+      hetero_bic <- safe_stat(hetero_model, "BIC")
+      hetero_aicc <- safe_stat(hetero_model, "AICc")
+    } else {
+      hetero_aic <- hetero_bic <- hetero_aicc <- NULL
     }
-    
-    # Combine AICs and BICs into a table
-    # comparison_table <- reactive({
-    #   req(input$run_lmm_model)
-    #   
-    #   # Initial model's AIC and BIC
-    #   first_model_aic <- safe_stat(initial_model(), "AIC")
-    #   first_model_bic <- safe_stat(initial_model(), "BIC")
-    #   first_model_aicc <- safe_stat(initial_model(), "AICc")
-    #   
-    #   # AIC and BIC for alternative models
-    #   models <- fit_alternative_models()
-    #   alternative_aics <- sapply(models, safe_stat, stat = "AIC")
-    #   alternative_bics <- sapply(models, safe_stat, stat = "BIC")
-    #   alternative_aiccs <- sapply(models, safe_stat, stat = "AICc")
-    #   
-    #   selected_ar <- paste0("AR(", input$ar_order, ") (selected correlation structure)")
-    #   
-    #   # Create table
-    #   data.frame(
-        # "Correlation Structure" = c(
-        #   ifelse(input$cov_structure == "AR(p)", selected_ar, paste(input$cov_structure, "(selected correlation structure)")),
-        #   names(alternative_aics)
-        # ),
-    #     "AIC" = c(first_model_aic, alternative_aics),
-    #     "BIC" = c(first_model_bic, alternative_bics),
-    #     "AICc" = c(first_model_aicc, alternative_aiccs),
-    #     stringsAsFactors = FALSE
-    #   )
-    # })
-    
-      comparison_table <- reactive({
-      req(input$run_lmm_model)
-      
-      # Initial model (homoscedastic)
-      first_model_aic <- safe_stat(initial_model(), "AIC")
-      first_model_bic <- safe_stat(initial_model(), "BIC")
-      first_model_aicc <- safe_stat(initial_model(), "AICc")
-      
-      # Heteroscedastic model (if selected)
-      if (input$heteroscedastic_check) {
-        hetero_model <- heteroscedastic_model()
-        hetero_aic <- safe_stat(hetero_model, "AIC")
-        hetero_bic <- safe_stat(hetero_model, "BIC")
-        hetero_aicc <- safe_stat(hetero_model, "AICc")
-      } else {
-        hetero_aic <- hetero_bic <- hetero_aicc <- NULL
-      }
-      
-      # Alternative models (other correlation structures)
-      models <- fit_alternative_models()
-      alternative_aics <- sapply(models, safe_stat, stat = "AIC")
-      alternative_bics <- sapply(models, safe_stat, stat = "BIC")
-      alternative_aiccs <- sapply(models, safe_stat, stat = "AICc")
-      
-      # Build table rows
-      selected_label <- ifelse(
-        input$cov_structure == "AR(p)",
-        paste0("AR(", input$ar_order, ") (Selected structure)"),
-        paste(input$cov_structure, "(Selected structure)")
+
+    # Alternative models (other correlation structures)
+    models <- fit_alternative_models()
+    alternative_aics <- sapply(models, safe_stat, stat = "AIC")
+    alternative_bics <- sapply(models, safe_stat, stat = "BIC")
+    alternative_aiccs <- sapply(models, safe_stat, stat = "AICc")
+
+    # Build table rows
+    selected_label <- ifelse(
+      input$cov_structure == "AR(p)",
+      paste0("AR(", input$ar_order, ") (Selected structure)"),
+      paste(input$cov_structure, "(Selected structure)")
+    )
+
+    df_rows <- list(
+      c(selected_label, first_model_aic, first_model_bic, first_model_aicc)
+    )
+
+    if (input$heteroscedastic_check) {
+      df_rows <- append(
+        df_rows,
+        list(c("Selected structure + Heteroscedastic variances", hetero_aic, hetero_bic, hetero_aicc))
       )
-      
-      df_rows <- list(
-        c(selected_label, first_model_aic, first_model_bic, first_model_aicc)
-      )
-      
-      if (input$heteroscedastic_check) {
-        df_rows <- append(
-          df_rows,
-          list(c("Selected structure + Heteroscedastic variances", hetero_aic, hetero_bic, hetero_aicc))
-        )
-      }
-      
-      df_rows <- append(df_rows, lapply(seq_along(alternative_aics), function(i) {
-        c(names(alternative_aics)[i], alternative_aics[i], alternative_bics[i], alternative_aiccs[i])
-      }))
-      
-      # Create data.frame
-      data.frame(
-        do.call(rbind, df_rows),
-        stringsAsFactors = FALSE
-      ) %>% setNames(c("Correlation Structure", "AIC", "BIC", "AICc"))
-      
-    })
-      
-      #selected_ar <- paste0("AR(", input$ar_order, ") (Selected)")
-      
-      # Create table with all models
-    #   data.frame(
-    #     "Correlation Structure" = c(
-    #       ifelse(input$cov_structure == "AR(p)", selected_ar, paste(input$cov_structure, "(Selected)")),
-    #       "Selected + Heteroscedastic variances",
-    #       names(alternative_aics)
-    #     ),
-    #     
-    #     "AIC" = c(first_model_aic, hetero_aic, alternative_aics),
-    #     "BIC" = c(first_model_bic, hetero_bic, alternative_bics),
-    #     "AICc" = c(first_model_aicc, hetero_aicc, alternative_aiccs),
-    #     stringsAsFactors = FALSE
-    #   )
-    # })
-    
-    # Render AIC and BIC table
-    observeEvent(input$run_lmm_model, {
+    }
+
+    df_rows <- append(df_rows, lapply(seq_along(alternative_aics), function(i) {
+      c(names(alternative_aics)[i], alternative_aics[i], alternative_bics[i], alternative_aiccs[i])
+    }))
+
+    # Create data.frame
+    data.frame(
+      do.call(rbind, df_rows),
+      stringsAsFactors = FALSE
+    ) %>% setNames(c("Correlation Structure", "AIC", "BIC", "AICc"))
+  })
+
+  # selected_ar <- paste0("AR(", input$ar_order, ") (Selected)")
+
+  # Create table with all models
+  #   data.frame(
+  #     "Correlation Structure" = c(
+  #       ifelse(input$cov_structure == "AR(p)", selected_ar, paste(input$cov_structure, "(Selected)")),
+  #       "Selected + Heteroscedastic variances",
+  #       names(alternative_aics)
+  #     ),
+  #
+  #     "AIC" = c(first_model_aic, hetero_aic, alternative_aics),
+  #     "BIC" = c(first_model_bic, hetero_bic, alternative_bics),
+  #     "AICc" = c(first_model_aicc, hetero_aicc, alternative_aiccs),
+  #     stringsAsFactors = FALSE
+  #   )
+  # })
+
+  # Render AIC and BIC table
+  observeEvent(input$run_lmm_model, {
     output$lmm_aic_table <- renderDT({
       req(input$run_lmm_model)
       tryCatch(
@@ -1344,67 +1344,70 @@ server <- function(input, output, session) {
       )
     })
   })
-    
-    
-    # Render AIC and BIC table
-    # observeEvent(input$run_lmm_model, {
-    #   output$lmm_aic_table <- renderDT({
-    #     datatable(comparison_table(), options = list(pageLength = 10), rownames = FALSE)
-    #   })
-    # })
-  
+
+
+  # Render AIC and BIC table
+  # observeEvent(input$run_lmm_model, {
+  #   output$lmm_aic_table <- renderDT({
+  #     datatable(comparison_table(), options = list(pageLength = 10), rownames = FALSE)
+  #   })
+  # })
+
   # Print the correlation structure for debugging
   # observeEvent(input$run_lmm_model, {
   #   req(cor_structure())
   #   print(cor_structure())
   # })
- 
-#-------------------------------------------------------------------------------  
+
+  #-------------------------------------------------------------------------------  
   # Dynamic UI for the LMM summary
-    output$lmm_summaryUI <- renderUI({
-      req(initial_model(), input$run_lmm_model)
-      tagList(
-        tags$h4("Model Summary", style = "color:#003399"),
-        # Spinner and conditional message for model summary
-        withSpinner(
-          tagList(
-            verbatimTextOutput("lmm_summary"),
-            conditionalPanel(
-              condition = "!output.lmm_summary || output.lmm_summary === ''",
-              tags$p("The model is being fitted. This process may take a few moments, so please be patient.", 
-                     style = "color:#003399; font-style: italic;")
+  output$lmm_summaryUI <- renderUI({
+    req(initial_model(), input$run_lmm_model)
+    tagList(
+      tags$h4("Model Summary", style = "color:#003399"),
+      # Spinner and conditional message for model summary
+      withSpinner(
+        tagList(
+          verbatimTextOutput("lmm_summary"),
+          conditionalPanel(
+            condition = "!output.lmm_summary || output.lmm_summary === ''",
+            tags$p("The model is being fitted. This process may take a few moments, so please be patient.",
+              style = "color:#003399; font-style: italic;"
             )
-          ),
-          type = 6, 
-          color = "#003399"
-        ),
-        br(),
-        fluidRow(
-          column(12,
-                 tags$h4("Model Fit Comparison", style = "color:#003399"),
-                 # Spinner and conditional message for AIC table
-                 withSpinner(
-                   tagList(
-                     DTOutput("lmm_aic_table"),
-                     conditionalPanel(
-                       condition = "!output.lmm_aic_table || output.lmm_aic_table === ''",
-                       tags$p("Calculating model fit metrics. Please wait while the table is generated.", 
-                              style = "color:#003399; font-style: italic;")
-                     )
-                   ),
-                   type = 6, 
-                   color = "#003399"
-                 ),
-                 br(),
-                 br(),
-                 br(),
-                 br(),
-                 br()
           )
+        ),
+        type = 6,
+        color = "#003399"
+      ),
+      br(),
+      fluidRow(
+        column(
+          12,
+          tags$h4("Model Fit Comparison", style = "color:#003399"),
+          # Spinner and conditional message for AIC table
+          withSpinner(
+            tagList(
+              DTOutput("lmm_aic_table"),
+              conditionalPanel(
+                condition = "!output.lmm_aic_table || output.lmm_aic_table === ''",
+                tags$p("Calculating model fit metrics. Please wait while the table is generated.",
+                  style = "color:#003399; font-style: italic;"
+                )
+              )
+            ),
+            type = 6,
+            color = "#003399"
+          ),
+          br(),
+          br(),
+          br(),
+          br(),
+          br()
         )
       )
-    })
-    
+    )
+  })
+
   # Display the summary of the initial model
   observeEvent(input$run_lmm_model, {
     output$lmm_summary <- renderPrint({
@@ -1414,7 +1417,7 @@ server <- function(input, output, session) {
     })
   })
 
-#------------------------------------------------------------------------------
+  #------------------------------------------------------------------------------
   output$download_report <- downloadHandler(
     filename = function() {
       paste("report", switch(input$report_format,

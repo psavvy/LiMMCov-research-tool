@@ -3,7 +3,7 @@
 
 LiMMCov uses time series insights for selecting complex covariance structures. The tool offers visualisations to assess the residuals of fixed effects models and offer suggestions for the correct structure based on the data. The application is based on the Shiny package and can be run locally or on a server. The user-friendly interface enables the user to navigate the workflow. A report can be downloaded with the results. 
 
-The application is freely accessible at <https://percysavieri.shinyapps.io/LiMMCov/>
+The application is freely accessible at <https://zq9mvv-vub0square.shinyapps.io/LiMMCov-research-tool/>
 
 
 ### User-interface
@@ -27,4 +27,4 @@ The 'app.R' file is the main R file; all the other R files are called here.
   2. The server part of Shiny, written in R, contains functions which handles the input from ui and process the output within a reactive value. These functions return a reactive value output. It processes the ui input to calculate output, communicates via keywords associated to each input and output functions declared in the ui function.  
 
             
-Version 19-Dec-2024
+Version 06-Mar-2025
