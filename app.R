@@ -108,14 +108,39 @@ ui <- fluidPage(
             "Have a real-world dataset you'd like to share with the LiMMCov community? ",
             "We welcome user-submitted datasets that are publicly available (e.g., openly licensed), ", "as they help us improve LiMMCov by covering a wider range of study designs and boundary cases. ", "If you are interested in contributing your dataset, please contact the development team via email so we can discuss adding it to our online repository."
           ),
+          br(),
+          tags$h4("Citation", style = "color:#003399"),
+          tags$p(
+            "If you use LiMMCov for your research, teaching, or presentations, please cite the following publication:"
+          ),
+          tags$blockquote(
+            style = "background:#f6f8fa; border-left:4px solid #FF6600; padding:12px 20px; margin:10px 0 20px 0; font-size:1.05em;",
+            HTML(
+              "Savieri, P., Stas, L., &amp; Barbé, K. (2025). <i>LiMMCov: An interactive research tool for efficiently selecting covariance structures in linear mixed models using insights from time series analysis</i>. <i>PLoS One, 20</i>(6), e0325834.<br>
+              <a href='https://doi.org/10.1371/journal.pone.0325834' target='_blank'>https://doi.org/10.1371/journal.pone.0325834</a>"
+            )
+          ),
+          tags$details(
+            tags$summary("Show BibTeX citation"),
+            tags$pre(
+              "@article{savieri2025limmcov,
+  title={LiMMCov: An interactive research tool for efficiently selecting covariance structures in linear mixed models using insights from time series analysis},
+  author={Savieri, Perseverence and Stas, Lara and Barb{\\'e}, Kurt},
+  journal={PLoS One},
+  volume={20},
+  number={6},
+  pages={e0325834},
+  year={2025},
+  doi={https://doi.org/10.1371/journal.pone.0325834},
+  publisher={Public Library of Science San Francisco, CA USA}
+}"
+            )
+          ),
           br(), br(),
           tags$h4(strong("Click on the Dataset tab to get started."), style = "color:#FF6600"),
           br(), br(),
-          # tags$h4("Note: This is not the final version of the app. It is still under development!", style = "color:#FF0000"),
           br(), br(),
 
-          # tags$h6(em("Copyright 2024, Support for Quantitative and Qualitative Research, Version 01.06.24"), align = "center"),
-          # br(),
         )
       )
     ),
@@ -135,7 +160,8 @@ ui <- fluidPage(
           sidebarPanel(
             width = 3,
             # Example Data
-            tags$p(strong("In this tab, you can upload your dataset or use example datasets provided in the app. You can also view and manage your data before proceeding to analysis in the GLM tab.", style = "color:#003399")),
+            tags$p(strong("In this tab, you can upload your dataset or use example datasets provided in the app. You can also view and manage your data before proceeding to analysis in the GLM tab.
+          Note: LiMMCov assumes data are provided in long format, where repeated measures are stacked by subject ID and time variable.", style = "color:#003399")),
             tags$hr(),
             selectizeInput(
               inputId = "exdata", label = strong("Choose example data", style = "color:#003399"), selected = "",
@@ -370,7 +396,7 @@ ui <- fluidPage(
             width = 3,
             # Linear mixed model sidebar content
             tags$p(
-              strong("Instructions:", style = "color:#CC0000"), " Use this tab to fit a Linear Mixed Model (LMM) by selecting an outcome variable, fixed effects, the chosen residual covariance structure (from previous tab) and interaction terms if needed. Click 'Run LMM' to estimate the model and view the summary outputs."
+              strong("Instructions:", style = "color:#CC0000"), "Use this tab to fit a Linear Mixed Model (LMM) by selecting an outcome variable, fixed effects, the chosen residual covariance structure (mandatory), and optional interaction terms. Click 'Run LMM' to estimate the model and view the summary outputs. If a required input (such as the covariance structure) is missing, the app will now prompt the user with an error message before proceeding."
             ),
             tags$hr(),
             # variableSelectorUI("lmm_selector"),
@@ -500,7 +526,7 @@ describe the correlations between the repeated measurements."),
         tags$h4("Step 1: Load data"),
         tags$p(
           "Begin by selecting an example dataset or uploading your data file. You can do this in the ",
-          strong("Data Input"), " sidebar tab. Make sure to choose the correct file extension to ensure proper data loading."
+          strong("Data Input"), " sidebar tab. Make sure to choose the correct file extension to ensure proper data loading. Make sure your dataset is in long format (i.e., one row per subject per time point). Wide-format data must be reshaped prior to use."
         ),
         tags$p(
           "If you need to change the data type of a variable, select the variable in question and then choose the ",
@@ -950,37 +976,105 @@ server <- function(input, output, session) {
   #     }
   #   }
   # })
+  ###############################################
 
+  # glm_model <- reactive({
+  #   req(input$run_glm_model)
+  # 
+  #   # Build up the formula string
+  #   predictors <- paste(input$predictor_glm, collapse = "+")
+  #   formula_str <- paste(input$outcome_glm, "~", input$timevar_glm)
+  # 
+  #   # If there are main-effect predictors
+  #   if (!is.null(input$predictor_glm)) {
+  #     formula_str <- paste(formula_str, "+", predictors)
+  #   }
+  # 
+  #   # If there are interaction terms
+  #   if (!is.null(input$added_glm)) {
+  #     interaction_terms <- paste(input$added_glm, collapse = " + ")
+  #     formula_str <- paste(formula_str, "+", interaction_terms)
+  #   }
+  # 
+  #   # Convert to a proper formula object
+  #   form_obj <- as.formula(formula_str)
+  # 
+  #   # Fit the model with the explicit formula in the call
+  #   mod <- gls(model = form_obj, data = dataset())
+  # 
+  #   # Update the call attribute to show the proper formula
+  #   mod$call$model <- form_obj
+  # 
+  #   return(mod)
+  # })
+  # 
+  # # Generate a summary of the regression model
+  # output$glm_summaryUI <- renderUI({
+  #   req(glm_model())
+  #   tagList(
+  #     tags$h4("Model summary", style = "color:#003399"),
+  #     br(),
+  #     uiOutput("glm_model_summary"),
+  #     br(), br(), br(), br(),
+  #     tags$h4(strong("Click on the Covariance Analysis tab to continue."), style = "color:#FF6600")
+  #   )
+  # })
+  # 
+  # output$glm_model_summary <- renderUI({
+  #   tab <- tab_model(glm_model())
+  #   HTML(tab$knitr)
+  # })
+  #################################################
+  
   glm_model <- reactive({
     req(input$run_glm_model)
-
+    
+    dat <- dataset()
+    
     # Build up the formula string
     predictors <- paste(input$predictor_glm, collapse = "+")
     formula_str <- paste(input$outcome_glm, "~", input$timevar_glm)
-
-    # If there are main-effect predictors
+    
     if (!is.null(input$predictor_glm)) {
       formula_str <- paste(formula_str, "+", predictors)
     }
-
-    # If there are interaction terms
     if (!is.null(input$added_glm)) {
       interaction_terms <- paste(input$added_glm, collapse = " + ")
       formula_str <- paste(formula_str, "+", interaction_terms)
     }
-
-    # Convert to a proper formula object
     form_obj <- as.formula(formula_str)
-
-    # Fit the model with the explicit formula in the call
-    mod <- gls(model = form_obj, data = dataset())
-
+    
+    # ---- Check for missing values in variables used ----
+    vars_used <- all.vars(form_obj)
+    dat_used <- dat[, vars_used, drop = FALSE]
+    if (anyNA(dat_used)) {
+      showNotification(
+        "Missing values detected! This app requires complete data. Please impute or remove missing values before analysis.",
+        type = "error",
+        duration = NULL
+      )
+      return(NULL)
+    }
+    
+    # ---- Fit model safely ----
+    mod <- tryCatch({
+      gls(model = form_obj, data = dat)
+    }, error = function(e) {
+      showNotification(
+        "Error fitting the model (possible missing values). Please check your data.",
+        type = "error",
+        duration = NULL
+      )
+      return(NULL)
+    })
+    
+    if (is.null(mod)) return(NULL)
+    
     # Update the call attribute to show the proper formula
     mod$call$model <- form_obj
-
-    return(mod)
+    mod
   })
-
+  
   # Generate a summary of the regression model
   output$glm_summaryUI <- renderUI({
     req(glm_model())
@@ -992,12 +1086,17 @@ server <- function(input, output, session) {
       tags$h4(strong("Click on the Covariance Analysis tab to continue."), style = "color:#FF6600")
     )
   })
-
+  
   output$glm_model_summary <- renderUI({
-    tab <- tab_model(glm_model())
-    HTML(tab$knitr)
+    mod <- glm_model()
+    if (is.null(mod)) {
+      tags$span(style="color:red;", "No model fitted due to missing data.")
+    } else {
+      tab <- tab_model(mod)
+      HTML(tab$knitr)
+    }
   })
-
+  
   # Residuals from fixed effects model
   glm_residuals <- reactive({
     # Extract residuals
@@ -1108,34 +1207,7 @@ server <- function(input, output, session) {
   }
 
   # # Helper function to fit models
-  # fit_model <- function(form, correlation) {
-  #   # 'form' is expected to be a formula object
-  #   # Convert it to a single-line character string
-  #   form_str <- paste(deparse(form, width.cutoff = 500), collapse = " ")
-  #
-  #   # Build the function call as a single string
-  #   final_call <- paste0(
-  #     "gls(",
-  #     form_str,
-  #     ", data = dataset(), correlation = ",
-  #     correlation,
-  #     ")"
-  #   )
-  #
-  #   # Print for debugging
-  #   #print(final_call)
-  #
-  #   # Safely evaluate
-  #   tryCatch(
-  #     eval(parse(text = final_call)),
-  #     error = function(e) {
-  #       print(e)
-  #       NULL
-  #     }
-  #   )
-  # }
-
-  # MODIFY: Update fit_model() to accept weights
+  # Update fit_model() to accept weights
   fit_model <- function(form, correlation, weights = NULL) {
     req(form, correlation)
 
@@ -1175,6 +1247,19 @@ server <- function(input, output, session) {
       correlation = cor_structure(input$cov_structure)
     )
   })
+  
+  observeEvent(input$run_lmm_model, {
+    if (is.null(input$cov_structure) || input$cov_structure == " ") {
+      showModal(modalDialog(
+        title = "Missing Input",
+        "You must select a covariance structure before fitting the model.",
+        easyClose = TRUE,
+        footer = modalButton("OK")
+      ))
+    }
+  })
+  
+  
 
   # Reactive for the heteroscedastic model
   heteroscedastic_model <- reactive({
@@ -1232,35 +1317,6 @@ server <- function(input, output, session) {
   }
 
   # Combine AICs and BICs into a table
-  # comparison_table <- reactive({
-  #   req(input$run_lmm_model)
-  #
-  #   # Initial model's AIC and BIC
-  #   first_model_aic <- safe_stat(initial_model(), "AIC")
-  #   first_model_bic <- safe_stat(initial_model(), "BIC")
-  #   first_model_aicc <- safe_stat(initial_model(), "AICc")
-  #
-  #   # AIC and BIC for alternative models
-  #   models <- fit_alternative_models()
-  #   alternative_aics <- sapply(models, safe_stat, stat = "AIC")
-  #   alternative_bics <- sapply(models, safe_stat, stat = "BIC")
-  #   alternative_aiccs <- sapply(models, safe_stat, stat = "AICc")
-  #
-  #   selected_ar <- paste0("AR(", input$ar_order, ") (selected correlation structure)")
-  #
-  #   # Create table
-  #   data.frame(
-  # "Correlation Structure" = c(
-  #   ifelse(input$cov_structure == "AR(p)", selected_ar, paste(input$cov_structure, "(selected correlation structure)")),
-  #   names(alternative_aics)
-  # ),
-  #     "AIC" = c(first_model_aic, alternative_aics),
-  #     "BIC" = c(first_model_bic, alternative_bics),
-  #     "AICc" = c(first_model_aicc, alternative_aiccs),
-  #     stringsAsFactors = FALSE
-  #   )
-  # })
-
   comparison_table <- reactive({
     req(input$run_lmm_model)
 
