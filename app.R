@@ -7,6 +7,15 @@
 
 options(shiny.maxRequestSize = 10000 * 1024^2)
 
+#options(bitmapType = "cairo")  # headless-friendly PNGs
+if (requireNamespace("ragg", quietly = TRUE)) {
+  options(device = function(...) ragg::agg_png(...))
+}
+summarytools::st_options(
+  use.x11 = FALSE,
+  plain.ascii = FALSE
+)
+
 #############################
 # Load libraries and sources
 #############################
@@ -234,8 +243,17 @@ ui <- fluidPage(
                 value = "datatab2",
                 # br(), br(),
                 # h5(strong("Data summary")),
-                htmlOutput("data_summ"),
-                br(), br(),
+                
+                tags$head(
+                  htmltools::singleton(
+                    tags$style(
+                      htmltools::HTML(paste0(summarytools::st_css(), collapse = "\n"))
+                    )
+                  )
+                ),
+                uiOutput("data_summ"),
+                #htmlOutput("data_summ"),
+                br(), br()
               )
             )
           )
@@ -720,6 +738,14 @@ describe the correlations between the repeated measurements."),
 )
 
 #####################################
+options(bitmapType = "cairo")  # headless-friendly PNGs
+summarytools::st_options(
+  use.x11 = FALSE,
+  plain.ascii = FALSE
+)
+
+
+#####################################
 # Define server logic
 #####################################
 server <- function(input, output, session) {
@@ -871,17 +897,43 @@ server <- function(input, output, session) {
   })
 
   # Data summary using dfSummary() from summarytools
+  # output$data_summ <- renderUI({
+  #   req(dataset())
+  #   print(
+  #     summarytools::dfSummary(dataset(),
+  #       graph = TRUE, valid.col = FALSE, graph.magnif = 0.75,
+  #       style = "grid"
+  #     ),
+  #     max.tbl.height = 800, method = "render",
+  #     headings = FALSE, bootstrap.css = FALSE
+  #   )
+  # })
+  
   output$data_summ <- renderUI({
     req(dataset())
-    print(
-      dfSummary(dataset(),
-        graph = TRUE, valid.col = FALSE, graph.magnif = 0.75,
-        style = "grid"
-      ),
-      max.tbl.height = 800, method = "render",
-      headings = FALSE, bootstrap.css = FALSE
+
+    s <- summarytools::dfSummary(
+      dataset(),
+      graph        = TRUE,
+      valid.col    = FALSE,
+      graph.magnif = 0.75,
+      style        = "grid"
     )
+
+    out <- print(
+      s,
+      method         = "render",
+      max.tbl.height = 800,
+      headings       = FALSE,
+      bootstrap.css  = FALSE
+    )
+
+    # Ensure a single string (Shiny requires length-1)
+    if (length(out) != 1) out <- paste(out, collapse = "\n")
+
+    htmltools::HTML(out)
   })
+
 
   ## Generalised Linear Model
   # Select variables
@@ -1099,42 +1151,57 @@ server <- function(input, output, session) {
   
   # Residuals from fixed effects model
   glm_residuals <- reactive({
-    # Extract residuals
-    dtresidL <- subset(dataset(), select = c(input$subject_id_glm, input$timevar_glm, input$outcome_glm))
-    dtresidL$residuals <- glm_model()$residuals
-    dtresidW <- pivot_wider(dtresidL,
-      id_cols = input$subject_id_glm, names_from = input$timevar_glm, values_from = residuals,
-      names_prefix = "resid_"
+    # # Extract residuals
+    # dtresidL <- subset(dataset(), select = c(input$subject_id_glm, input$timevar_glm, input$outcome_glm))
+    # dtresidL$residuals <- glm_model()$residuals
+    # dtresidW <- pivot_wider(dtresidL,
+    #   id_cols = input$subject_id_glm, names_from = input$timevar_glm, values_from = residuals,
+    #   names_prefix = "resid_"
+    # )
+    # 
+    # # Create correlation matrices
+    # resCor <- cor(dtresidW[, -1])
+    # 
+    # # Create a list of vectors from the matrix
+    # listCor <- map(-(ncol(resCor) - 1):(ncol(resCor) - 1), ~ mean(resCor[outer(1:ncol(resCor), 1:ncol(resCor), "-") == .x]))
+    # 
+    # # Create a data frame from listCor
+    # tp <- ncol(resCor)
+    # lag <- 1:(tp - 1)
+    # means <- unlist(listCor[1:(tp - 1)])
+    # dat <- data.frame(lag, means = rev(means))
+    # 
+    # # Plot line graph using the mean for each lag in the list
+    # # This is the plot we will add under "Residual Plots from the Fixed Effects Model"
+    # p <- ggplot(dat, aes(x = lag, y = means)) +
+    #   geom_line() +
+    #   scale_x_continuous(breaks = lag) +
+    #   ylim(c(-1, 1)) +
+    #   xlab("Lag") +
+    #   ylab("Mean") +
+    #   ggtitle("Correlation structure") +
+    #   theme_bw()
+    # 
+    # ggplotly(p, width = 425, height = 425)
+    
+    p_ggplot <- create_residual_plot_from_model(
+      glm_model = glm_model(),
+      dataset = dataset(),
+      subject_id = input$subject_id_glm,
+      timevar = input$timevar_glm,
+      outcome = input$outcome_glm
     )
-
-    # Create correlation matrices
-    resCor <- cor(dtresidW[, -1])
-
-    # Create a list of vectors from the matrix
-    listCor <- map(-(ncol(resCor) - 1):(ncol(resCor) - 1), ~ mean(resCor[outer(1:ncol(resCor), 1:ncol(resCor), "-") == .x]))
-
-    # Create a data frame from listCor
-    tp <- ncol(resCor)
-    lag <- 1:(tp - 1)
-    means <- unlist(listCor[1:(tp - 1)])
-    dat <- data.frame(lag, means = rev(means))
-
-    # Plot line graph using the mean for each lag in the list
-    # This is the plot we will add under "Residual Plots from the Fixed Effects Model"
-    p <- ggplot(dat, aes(x = lag, y = means)) +
-      geom_line() +
-      scale_x_continuous(breaks = lag) +
-      ylim(c(-1, 1)) +
-      xlab("Lag") +
-      ylab("Mean") +
-      ggtitle("Correlation structure") +
-      theme_bw()
-
-    ggplotly(p, width = 425, height = 425)
+    
+    # Return a list with both versions
+    list(
+      ggplot = p_ggplot,
+      plotly = ggplotly(p_ggplot, width = 425, height = 425)
+    )
   })
 
   output$plot_glm_residuals <- renderPlotly({
-    glm_residuals()
+    #glm_residuals()
+    glm_residuals()$plotly
   })
 
   # Plot the PACF.gls from the nlme package
@@ -1142,7 +1209,7 @@ server <- function(input, output, session) {
     plot_acf_pacf(glm_model())
   })
 
-  output$plot_glm_acf <- renderPlotly({
+  output$plot_glm_pacf <- renderPlotly({
     auto_plots()$pacf_plot
   })
 
@@ -1155,7 +1222,7 @@ server <- function(input, output, session) {
       fluidRow(
         column(1, ),
         column(5, plotlyOutput("plot_glm_residuals")),
-        column(5, plotlyOutput("plot_glm_acf"))
+        column(5, plotlyOutput("plot_glm_pacf"))
       ),
       br(),
       br(),
@@ -1370,23 +1437,6 @@ server <- function(input, output, session) {
     ) %>% setNames(c("Correlation Structure", "AIC", "BIC", "AICc"))
   })
 
-  # selected_ar <- paste0("AR(", input$ar_order, ") (Selected)")
-
-  # Create table with all models
-  #   data.frame(
-  #     "Correlation Structure" = c(
-  #       ifelse(input$cov_structure == "AR(p)", selected_ar, paste(input$cov_structure, "(Selected)")),
-  #       "Selected + Heteroscedastic variances",
-  #       names(alternative_aics)
-  #     ),
-  #
-  #     "AIC" = c(first_model_aic, hetero_aic, alternative_aics),
-  #     "BIC" = c(first_model_bic, hetero_bic, alternative_bics),
-  #     "AICc" = c(first_model_aicc, hetero_aicc, alternative_aiccs),
-  #     stringsAsFactors = FALSE
-  #   )
-  # })
-
   # Render AIC and BIC table
   observeEvent(input$run_lmm_model, {
     output$lmm_aic_table <- renderDT({
@@ -1400,20 +1450,6 @@ server <- function(input, output, session) {
       )
     })
   })
-
-
-  # Render AIC and BIC table
-  # observeEvent(input$run_lmm_model, {
-  #   output$lmm_aic_table <- renderDT({
-  #     datatable(comparison_table(), options = list(pageLength = 10), rownames = FALSE)
-  #   })
-  # })
-
-  # Print the correlation structure for debugging
-  # observeEvent(input$run_lmm_model, {
-  #   req(cor_structure())
-  #   print(cor_structure())
-  # })
 
   #-------------------------------------------------------------------------------  
   # Dynamic UI for the LMM summary
@@ -1474,36 +1510,91 @@ server <- function(input, output, session) {
   })
 
   #------------------------------------------------------------------------------
+  # output$download_report <- downloadHandler(
+  #   filename = function() {
+  #     paste("report", switch(input$report_format,
+  #       HTML = ".html",
+  #       PDF = ".pdf",
+  #       Word = ".docx"
+  #     ), sep = "")
+  #   },
+  #   content = function(file) {
+  #     rmarkdown::render(
+  #       input = "report_template.Rmd",
+  #       output_file = file,
+  #       params = list(
+  #         glm_summary = summary(glm_model()),
+  #         glm_residuals = glm_residuals(),
+  #         glm_acf = auto_plots()$pacf_plot,
+  #         # aic_plot = aic_plot(),
+  #         lmm_summary = summary(initial_model()),
+  #         aic_table = comparison_table()
+  #       ),
+  #       envir = new.env(parent = globalenv()),
+  #       output_format = switch(input$report_format,
+  #         HTML = "html_document",
+  #         PDF = "pdf_document",
+  #         Word = "word_document"
+  #       )
+  #     )
+  #   }
+  # )
+  
   output$download_report <- downloadHandler(
     filename = function() {
-      paste("report", switch(input$report_format,
-        HTML = ".html",
-        PDF = ".pdf",
-        Word = ".docx"
-      ), sep = "")
+      paste("LMMCov_report_", format(Sys.time(), "%Y%m%d_%H%M%S"), 
+            switch(input$report_format,
+                   HTML = ".html",
+                   PDF = ".pdf",
+                   Word = ".docx"
+            ), sep = "")
     },
     content = function(file) {
+      # Create temporary directory for rendering
+      temp_dir <- tempdir()
+      temp_report <- file.path(temp_dir, "report_template.Rmd")
+      
+      # Copy the Rmd file to temp directory
+      file.copy("report_template.Rmd", temp_report, overwrite = TRUE)
+      
+      # Prepare parameters based on format
+      output_format <- switch(input$report_format,
+                              HTML = "html_document",
+                              PDF = "pdf_document",
+                              Word = "word_document"
+      )
+      
+      # Get plot objects (both versions are already available)
+      residual_plots <- glm_residuals()
+      acf_pacf_plots <- auto_plots()
+      
+      # Render the document
       rmarkdown::render(
-        input = "report_template.Rmd",
+        input = temp_report,
         output_file = file,
         params = list(
           glm_summary = summary(glm_model()),
-          glm_residuals = glm_residuals(),
-          glm_acf = auto_plots()$pacf_plot,
-          # aic_plot = aic_plot(),
+          # Residual plot - plotly for HTML, ggplot for PDF/Word
+          glm_residuals = residual_plots$plotly,
+          glm_residuals_static = residual_plots$ggplot,
+          # PACF plot - plotly for HTML, ggplot for PDF/Word
+          glm_pacf = acf_pacf_plots$pacf_plot,
+          glm_pacf_static = acf_pacf_plots$pacf_plot_ggplot,
+          # LMM results
           lmm_summary = summary(initial_model()),
           aic_table = comparison_table()
         ),
         envir = new.env(parent = globalenv()),
-        output_format = switch(input$report_format,
-          HTML = "html_document",
-          PDF = "pdf_document",
-          Word = "word_document"
-        )
+        output_format = output_format
       )
     }
   )
+  
+  
+  
+  
 }
+
 
 #################################
 # Run the Shiny app
